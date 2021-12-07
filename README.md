@@ -28,6 +28,12 @@ The master key is in the master key folder.
 1.	sudo ssh-copy-id -i ./vmadmin_key.pub vmadmin@192.168.68.109
 2.	test access: sudo ssh vmadmin@192.168.68.109 -i ./vmadmin_key
 
+## Adding a multipass image running on Windows
+1) Install multipass on windows
+2) Create an external virtual switch in Hyper-V manager. The underlying network adapter can be shared with windows should there not be a secondary network adapter available. This, however, is not optimal as this sharing between two operating system slows down networking. A secondary network adapter dedicated to the multipass virtual machine is recommended. I use an external wifi adapter for this.
+3) Run: 'multipass launch --cloud-init cloud_init.yml --cpus 4 --mem 4048M -n zoops1 --network “WiFi 2”'
+4) Note the ip address assigned to the external switch and add to vmworkers section in the Atomika inventory file.  
+
 ## References 
 Read the first two to gain understanding what the two prompts starting the master boot-up are about. 
 1) https://kubernetes.io/docs/setup/production-environment/tools/kubeadm/high-availability/
