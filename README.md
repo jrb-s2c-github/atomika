@@ -1,7 +1,7 @@
 # Atomika
 
 ## Essentials
-Ansible scripts to boot a local Kubernetes cluster for use as a shared development environment and/or Spinnaker CI/CD constellation:
+Ansible scripts to boot a local Kubernetes cluster for use as a shared development environment and/or Spinnaker CI/CD constellation. Tested on Ubuntu 20.04.
 
 1) Edit the inventory file to  
    1) add master node, co-master nodes for high availability and worker nodes;
