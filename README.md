@@ -1,5 +1,6 @@
 # Atomika
 
+## Essentials
 Ansible scripts to boot a local Kubernetes cluster for use as a shared development environment and/or Spinnaker CI/CD constellation:
 
 1) Edit the inventory file to  
@@ -10,8 +11,23 @@ Ansible scripts to boot a local Kubernetes cluster for use as a shared developme
 4) (Optional) Run k8s_comasters.yml to join the two other master nodes to enable high availability
 5) Run k8s_workers.yml to join the worker nodes
 
+## Preparing a Linux box to take commands from Ansible
 In the multipass folder is a cloud_init.yml file to prepare ubuntu nodes to receive intsruction from Ansible.
 The master key is in the master key folder.
+
+Alternatively it can be done manualy as follows:
+### New Linux box:
+1.	Sudo adduser vmadmin
+2.	Sudo usermod -aG sudo vmadmin
+3.	sudo update-alternatives --config editor  select vim 
+4.	sudo visudo: 
+   a) vmadmin ALL=(ALL) NOPASSWD:ALL 
+   b) test that user can ‘sudo ls /root’ without having to enter password
+
+### Copy key from server where ansible commands are ran from:
+1.	sudo ssh-copy-id -i ./vmadmin_key.pub vmadmin@192.168.68.109
+2.	test access: sudo ssh vmadmin@192.168.68.109 -i ./vmadmin_key
+
 
 ## References 
 Read the first two to gain understanding what the two prompts starting the master boot-up are about. 
