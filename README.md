@@ -20,8 +20,8 @@ Alternatively it can be done manualy as follows:
 1.	Sudo adduser vmadmin
 2.	Sudo usermod -aG sudo vmadmin
 3.	sudo update-alternatives --config editor  select vim 
-4.	sudo visudo: 
-   a) vmadmin ALL=(ALL) NOPASSWD:ALL 
+4.	sudo visudo
+5.	a) Add: 'vmadmin ALL=(ALL) NOPASSWD:ALL' 
    b) test that user can ‘sudo ls /root’ without having to enter password
 
 ### Copy key from server where ansible commands are ran from:
