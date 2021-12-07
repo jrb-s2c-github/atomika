@@ -14,7 +14,7 @@ In the multipass folder is a cloud_init.yml file to prepare ubuntu nodes to rece
 The master key is in the master key folder.
 
 ## References 
-Read the first two to gain understanding what the two prompts starting the master boot-up is about.
+Read the first two to gain understanding what the two prompts starting the master boot-up are about. The third one explains how to prepare a linux box to receive remote sudo commands without requiring a password to be entered.
 1) https://kubernetes.io/docs/setup/production-environment/tools/kubeadm/high-availability/
 2) https://metallb.universe.tf/configuration/
 3) https://phoenixnap.com/kb/how-to-create-sudo-user-on-ubuntu#:~:text=Most%20Linux%20systems%2C%20including%20Ubuntu%2C%20have%20a%20user,terminal%2C%20enter%20the%20command%3A%20usermod%20-aG%20sudo%20newuser
