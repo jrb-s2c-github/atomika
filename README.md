@@ -15,19 +15,18 @@ Ansible scripts to boot a local Kubernetes cluster for use as a shared developme
 In the multipass folder is a cloud_init.yml file to prepare ubuntu nodes to receive intsruction from Ansible.
 The master key is in the master key folder.
 
-Alternatively, it can be done manualy as follows:
+**Alternatively**, it can be done manually as follows:
 ### New Linux box:
-1.	Sudo adduser vmadmin
-2.	Sudo usermod -aG sudo vmadmin
-3.	sudo update-alternatives --config editor  select vim 
-4.	sudo visudo
-5.	a) Add: 'vmadmin ALL=(ALL) NOPASSWD:ALL' 
-   b) test that user can ‘sudo ls /root’ without having to enter password
+1. Sudo adduser vmadmin
+2. Sudo usermod -aG sudo vmadmin
+3. sudo update-alternatives --config editor  select vim 
+4. sudo visudo
+5. Add: 'vmadmin ALL=(ALL) NOPASSWD:ALL'
+6. test that user can ‘sudo ls /root’ without having to enter password
 
 ### Copy key from server where ansible commands are ran from:
 1.	sudo ssh-copy-id -i ./vmadmin_key.pub vmadmin@192.168.68.109
 2.	test access: sudo ssh vmadmin@192.168.68.109 -i ./vmadmin_key
-
 
 ## References 
 Read the first two to gain understanding what the two prompts starting the master boot-up are about. 
