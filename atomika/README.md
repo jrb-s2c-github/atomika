@@ -1,1 +1,1 @@
-# Anisible scripts
+# Ansible inventory and scripts
