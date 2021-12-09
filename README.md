@@ -18,7 +18,7 @@ The master key is in the master key folder.
 ### New Linux box:
 1. Sudo adduser vmadmin
 2. Sudo usermod -aG sudo vmadmin
-3. sudo update-alternatives --config editor  select vim 
+3. sudo update-alternatives --config editor. Select vim should you be unfamiliar with Nano.
 4. sudo visudo
 5. Add: 'vmadmin ALL=(ALL) NOPASSWD:ALL'
 6. test that user can ‘sudo ls /root’ without having to enter password
