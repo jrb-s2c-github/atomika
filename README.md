@@ -1,5 +1,5 @@
 # Atomika
-Ansible scripts to boot a local Kubernetes cluster (both windows and linux workers) for use as a shared development environment and/or host for a Spinnaker CI/CD constellation (see https://github.com/jrb-s2c-github/spinnaker_tryout) Tested on Ubuntu 20.04.
+Ansible scripts to boot a local Kubernetes cluster (both windows and linux worker nodes) for use as a shared development environment and/or host for a Spinnaker CI/CD constellation (see https://github.com/jrb-s2c-github/spinnaker_tryout) Tested on Ubuntu 20.04.
 
 ## Essentials
 1) Edit the inventory file to  
