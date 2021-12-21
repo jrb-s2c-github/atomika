@@ -24,7 +24,7 @@ The master key is in the master key folder.
 6. test that user can ‘sudo ls /root’ without having to enter password
 
 ### Copy key from server where ansible commands are ran from:
-1.	Create public and private keys for user vmadmin using the ssh-keygen command on Ansible server should the keys not yet exist.
+1.	Create public and private keys for user vmadmin using the ssh-keygen command on Ansible server should the keys not yet exist. This private key is the one that should be referenced in the Ansible inventory file.
 2.	sudo ssh-copy-id -i ./vmadmin_key.pub vmadmin@192.168.68.109
 3.	test access: sudo ssh vmadmin@192.168.68.109 -i ./vmadmin_key
 
