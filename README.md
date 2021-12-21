@@ -34,6 +34,15 @@ The master key is in the master key folder.
 3) Run: 'multipass launch --cloud-init cloud_init.yml --cpus 4 --mem 4048M -n zoops1 --network “WiFi 2”'
 4) Note the ip address assigned to the external switch and add to vmworkers section in the Atomika inventory file.  
 
+## Testing Ingress and MetalLB loadbalancer ##
+1) Run 'kubectl get service ingress-nginx-controller --namespace=ingress-nginx' and check that an IP address has been assigned to field "EXTERNAL-IP". This means MetalLB is listening on this IP address.
+2) Run 'kubectl create deployment demo --image=httpd --port=80' to install web server
+3) Run 'kubectl expose deployment demo' to expose web server as service
+4) Run 'kubectl create ingress demo --class=nginx --rule www.demo.io/=demo:80' to create Ingress resource
+5) Open www.demo.io inside a web browser on any node in the cluster and check that "It works!" is displayed
+
+See https://kubernetes.github.io/ingress-nginx/deploy/#quick-start for more
+
 ## References 
 Read the first two to gain understanding what the two prompts starting the master boot-up are about. 
 1) https://kubernetes.io/docs/setup/production-environment/tools/kubeadm/high-availability/
