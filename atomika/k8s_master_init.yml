@@ -2,15 +2,16 @@
 
 - hosts: masters
   #remote_user: k8s5gc
-  remote_user: vmadmin
+#  remote_user: vmadmin
   become: yes
   become_method: sudo
   become_user: root
   gather_facts: yes
   connection: ssh
+  roles:
+    - atomika_base
 
   vars_prompt:
-
     - name: "control_plane_ep"
       prompt: "Enter the DNS name of the control plane load balancer?"
       private: no
@@ -38,8 +39,8 @@
 
 
   tasks:
-
    - name: Initializing Kubernetes Cluster
+     become: yes
      #     command: kubeadm init --pod-network-cidr 10.244.0.0/16 --control-plane-endpoint "{{ ansible_eno1.ipv4.address }}:6443" --upload-certs
      command: kubeadm init --pod-network-cidr 10.244.0.0/16 --control-plane-endpoint "{{ control_plane_ep }}:6443" --upload-certs
      #command: kubeadm init --pod-network-cidr 10.244.0.0/16 --upload-certs
@@ -51,9 +52,9 @@
    - name: Create directory for kube config.
      #become_user: k8s5gc`
      #become_method: sudo
-     #become: yes
+     become: yes
      file:
-       path: /home/{{ansible_user }}/.kube
+       path: /home/{{ ansible_user }}/.kube
        state: directory
        owner: "{{ ansible_user }}"
        group: "{{ ansible_user }}"
@@ -81,16 +82,19 @@
        path: /home/{{ ansible_user }}/.kube/cache
        state: absent
 
+# TODO parameterize "become_user: ansible" below, e.g. "become_user: {{ ansible }}"
    - name: Create Pod Network & RBAC.
-     become_user: vmadmin
+     become_user: ansible
      become_method: sudo
      become: yes
      command: "{{ item }}"
      with_items:
-        - curl https://raw.githubusercontent.com/coreos/flannel/2140ac876ef134e0ed5af15c65e414cf26827915/Documentation/kube-flannel.yml -o /home/{{ ansible_user }}/kube-flannel.yml
-        - sed -i 's/io\/v1beta1/io\/v1/' /home/{{ ansible_user }}/kube-flannel.yml
-        - kubectl apply -f /home/{{ ansible_user }}/kube-flannel.yml
-        - rm /home/{{ ansible_user }}/kube-flannel.yml  
+       kubectl apply -f https://raw.githubusercontent.com/flannel-io/flannel/master/Documentation/kube-flannel.yml
+#        - kubectl apply -f https://github.com/flannel-io/flannel/releases/latest/download/kube-flannel.yml
+#        - curl https://raw.githubusercontent.com/coreos/flannel/2140ac876ef134e0ed5af15c65e414cf26827915/Documentation/kube-flannel.yml -o /home/{{ ansible_user }}/kube-flannel.yml
+#        - sed -i 's/io\/v1beta1/io\/v1/' /home/{{ ansible_user }}/kube-flannel.yml
+#        - kubectl apply -f /home/{{ ansible_user }}/kube-flannel.yml
+#        - rm /home/{{ ansible_user }}/kube-flannel.yml
           #- kubectl apply -f {{ pod_network_manifest_file }}        
           #- kubectl apply -f {{ rbac_manifest_file }}
 
@@ -108,15 +112,17 @@
      local_action: copy content="{{ kubernetes_join_command.stdout_lines[0] }}" dest="/tmp/kubernetes_join_command" mode=0777
 
    - name: Installing Nginx Ingress Controller
-     become_user: vmadmin
+     # TODO
+     become_user: ansible
      become_method: sudo
-     become: yes     
+#     become: yes
      command: kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.0.5/deploy/static/provider/cloud/deploy.yaml
      run_once: true
      #delegate_to: "{{ k8s_master_ip }}"
 
    - name: FIXME
-     become_user: vmadmin
+     # TODO should be parameter
+     become_user: ansible
      become_method: sudo
      become: yes
      command: kubectl delete -A ValidatingWebhookConfiguration ingress-nginx-admission
@@ -124,25 +130,37 @@
      #delegate_to: "{{ k8s_master_ip }}"     
 
    - name: Install Metallb1.
-     become_user: vmadmin
+     # TODO should be parameter
+     become_user: ansible
      become_method: sudo
      become: yes
-     shell: 'kubectl -n kube-system get configmap kube-proxy -o yaml > /home/vmadmin/kube-proxy.yml'
+     shell: 'kubectl -n kube-system get configmap kube-proxy -o yaml > /home/{{ ansible_user }}/kube-proxy.yml'
 
    - name: Install Metallb2.
-     become_user: vmadmin
+     ansible.builtin.copy:
+       src: metallb/metalb-cm.yml
+       dest: /home/{{ ansible_user }}
+       owner: root
+       group: root
+       mode: '0644'
+
+   - name: Install Metallb3.
+     # TODO should be parameter
+     become_user: ansible
      become_method: sudo
      become: yes
      command: "{{ item }}"
      with_items:
        - "sed -i 's/strictARP: false/strictARP: true/' /home/{{ ansible_user }}/kube-proxy.yml"
        - kubectl apply -f /home/{{ ansible_user }}/kube-proxy.yml
-       - rm /home/{{ ansible_user }}/kube-proxy.yml
-       - kubectl apply -f https://raw.githubusercontent.com/metallb/metallb/v0.11.0/manifests/namespace.yaml
-       - kubectl apply -f https://raw.githubusercontent.com/metallb/metallb/v0.11.0/manifests/metallb.yaml     
-       - "cp {{ playbook_dir }}/metallb/metalb-cm.yml {{ playbook_dir }}/metallb/metalb-cm1.yml" 
-       - "sed -i 's/##-##/{{ metal_lb_range }}/' {{ playbook_dir }}/metallb/metalb-cm1.yml"  
-       - "kubectl apply -f {{ playbook_dir }}/metallb/metalb-cm1.yml"
-         #- "rm {{ playbook_dir }}/metallb/metalb-cm1.yml"  
+#       - rm /home/{{ ansible_user }}/kube-proxy.yml
+       - kubectl apply -f https://raw.githubusercontent.com/metallb/metallb/v0.13.11/config/manifests/metallb-native.yaml
+#       - kubectl apply -f https://raw.githubusercontent.com/metallb/metallb/v0.12.1/manifests/namespace.yaml
+#       - kubectl apply -f https://raw.githubusercontent.com/metallb/metallb/v0.12.1/manifests/metallb.yaml
+#       - "cp {{ playbook_dir }}/metallb/metalb-cm.yml {{ playbook_dir }}/metallb/metalb-cm1.yml"
+       - "sed -i 's/##-##/{{ metal_lb_range }}/' /home/{{ ansible_user }}/metalb-cm.yml"
+       - "kubectl apply -f /home/{{ ansible_user }}/l2adv.yml"
+       - "kubectl apply -f /home/{{ ansible_user }}/address-pool.yml"
+         #- "rm {{ playbook_dir }}/metallb/metalb-cm1.yml"
 ...
 

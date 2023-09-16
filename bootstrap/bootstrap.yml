@@ -1,0 +1,35 @@
+---
+
+- name: Bootstrap ansible
+  hosts: all
+  become: true
+  tasks:
+  - name: Add ansible user
+    ansible.builtin.user:
+      name: ansible
+    become: true
+
+  - name: Add SSH key for ansible
+    ansible.posix.authorized_key:
+      user: ansible
+      key: "{{ lookup('file', 'ansible.pub') }}"
+      state: present
+      exclusive: true  # to allow revocation
+      # Join the key options with comma (no space) to lock down the account:
+      key_options: "{{ ','.join([
+          'no-agent-forwarding',
+          'no-port-forwarding',
+          'no-user-rc',
+          'no-x11-forwarding'
+        ]) }}"  # noqa jinja[spacing]
+    become: true
+
+  - name: Configure sudoers
+    community.general.sudoers:
+      name: ansible
+      user: ansible
+      state: present
+      commands: ALL
+      nopassword: true
+      runas: ALL  # ansible user should be able to impersonate someone else
+    become: true

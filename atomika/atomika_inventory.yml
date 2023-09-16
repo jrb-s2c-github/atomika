@@ -1,33 +1,33 @@
 masters:
   hosts:
     host1:
-      ansible_host: "192.168.68.107" 
+      ansible_host: "192.168.68.116"
       ansible_connection: ssh
-      ansible_user: vmadmin
-      ansible_ssh_common_args: "-o StrictHostKeyChecking=no -o ControlMaster=no -o ControlPath=none"
-      ansible_ssh_private_key_file: /home/vmadmin/.ssh/master_key/vmadmin_key
+      ansible_user: ansible
+      ansible_ssh_common_args: "-o ControlMaster=no -o ControlPath=none"
+      ansible_ssh_private_key_file: ./bootstrap/ansible
 comasters:
   hosts:
     co-master_ubuntu:
       ansible_connection: ssh
       ansible_host: "192.168.68.134"
       ansible_user: vmadmin
-      ansible_ssh_common_args: "-o StrictHostKeyChecking=no -o ControlMaster=no -o ControlPath=none"
-      ansible_ssh_private_key_file: /home/vmadmin/.ssh/master_key/vmadmin_key     
+      ansible_ssh_common_args: "-o ControlMaster=no -o ControlPath=none"
+      ansible_ssh_private_key_file: ./bootstrap/ansible
     co-master_vivobook:
       ansible_connection: ssh
       ansible_host: "192.168.68.109"
       ansible_user: vmadmin
-      ansible_ssh_common_args: "-o StrictHostKeyChecking=no -o ControlMaster=no -o ControlPath=none"
-      ansible_ssh_private_key_file: /home/vmadmin/.ssh/master_key/vmadmin_key      
+      ansible_ssh_common_args: "-o ControlMaster=no -o ControlPath=none"
+      ansible_ssh_private_key_file: ./bootstrap/ansible
 workers:
   hosts:
     client1:
       ansible_connection: ssh
-      ansible_host: "192.168.68.109"
-      ansible_user: vmadmin
-      ansible_ssh_common_args: "-o StrictHostKeyChecking=no -o ControlMaster=no -o ControlPath=none"
-      ansible_ssh_private_key_file: /home/vmadmin/.ssh/master_key/vmadmin_key 
+      ansible_host: "192.168.68.115"
+      ansible_user: ansible
+      ansible_ssh_common_args: "-o ControlMaster=no -o ControlPath=none"
+      ansible_ssh_private_key_file: ./bootstrap/ansible
 vmworkers:
   hosts:
           #vm-worker1:
