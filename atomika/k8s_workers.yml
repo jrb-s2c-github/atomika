@@ -1,23 +1,26 @@
 # k8s_workers.yml
 ---
-- hosts: masters
-  remote_user: vmadmin
+- hosts: workers, vmworkers
+  remote_user: "{{ ansible_user }}"
   become: yes
   become_method: sudo
-  become_user: root
   gather_facts: yes
   connection: ssh
+  roles:
+    - atomika_base
 
+- hosts: masters
   tasks:
-
-   - name: Get the token for joining the nodes with Kuberentes master.
+   - name: Get the token for joining the nodes with Kuberenetes master.
+     become_user: "{{ ansible_user }}"
      shell: kubeadm token create  --print-join-command
      register: kubernetes_join_command
 
-   - debug:
-       msg: "{{ kubernetes_join_command.stdout }}"
+#   - debug:
+#       msg: "{{ kubernetes_join_command.stdout }}"
 
-   - name: Generate the secret for joining the nodes with Kuberentes master.
+   - name: Generate the secret for joining the nodes with Kuberenetes master.
+     become: yes
      shell: kubeadm init phase upload-certs --upload-certs
      register: kubernetes_join_secret
 
@@ -25,22 +28,21 @@
      become: false
      local_action: copy content="{{ kubernetes_join_command.stdout_lines[0] }} --certificate-key {{ kubernetes_join_secret.stdout_lines[2] }}" dest="/tmp/kubernetes_join_command" mode=0700
 
-
-- hosts: vmworkers
-  become_user: root
-  gather_facts: yes
-  connection: ssh
-
-  tasks:
-    - name: Retrieve ip routes
-      shell: ip route list
-      register: ip_routes
-
-    - name: Delete first route on internal default switch
-      become: yes
-      become_method: sudo
-      become_user: root
-      command: ip route del {{ ip_routes.stdout_lines[0] }}
+#- hosts: vmworkers
+#  become_user: root
+#  gather_facts: yes
+#  connection: ssh
+#
+#  tasks:
+#    - name: Retrieve ip routes
+#      shell: ip route list
+#      register: ip_routes
+#
+#    - name: Delete first route on internal default switch
+#      become: yes
+#      become_method: sudo
+#      become_user: root
+#      command: ip route del {{ ip_routes.stdout_lines[0] }}
 
 - hosts: workers, vmworkers
   #remote_user: k8s5gc
@@ -70,44 +72,44 @@
 
    - debug:
        msg: "{{ joined_or_not.stdout }}"
-
-- hosts: masters
-  #remote_user: k8s5gc
-  #become: yes
-  #become_method: sudo
-  become_user: root
-  gather_facts: yes
-  connection: ssh
-
-  tasks:
-
-   - name: Configure kubectl command auto-completion.
-     lineinfile:
-       dest: /home/{{ ansible_user }}/.bashrc
-       line: 'source <(kubectl completion bash)'
-       insertafter: EOF
+#
+#- hosts: masters
+#  #remote_user: k8s5gc
+#  #become: yes
+#  #become_method: sudo
+#  become_user: root
+#  gather_facts: yes
+#  connection: ssh
+#
+#  tasks:
+#
+#   - name: Configure kubectl command auto-completion.
+#     lineinfile:
+#       dest: /home/{{ ansible_user }}/.bashrc
+#       line: 'source <(kubectl completion bash)'
+#       insertafter: EOF
        
-- hosts: vmworkers
-  become_user: root
-  gather_facts: yes
-  connection: ssh
-
-  tasks:
-    - name: Setting the IP address of the node using KUBELET_EXTRA_ARGS.
-      become: yes
-      become_method: sudo
-      become_user: root
-      lineinfile:
-        path: /var/lib/kubelet//kubeadm-flags.env  
-        line: KUBELET_EXTRA_ARGS="--node-ip {{ ansible_eth1.ipv4.address }}"
-
-    - name: Restarting Kubelet service
-      become: yes
-      become_method: sudo
-      become_user: root
-      command: "{{ item }}"
-      with_items:
-        - systemctl daemon-reload
-        - systemctl restart kubelet       
+#- hosts: vmworkers
+#  become_user: root
+#  gather_facts: yes
+#  connection: ssh
+#
+#  tasks:
+#    - name: Setting the IP address of the node using KUBELET_EXTRA_ARGS.
+#      become: yes
+#      become_method: sudo
+#      become_user: root
+#      lineinfile:
+#        path: /var/lib/kubelet//kubeadm-flags.env
+#        line: KUBELET_EXTRA_ARGS="--node-ip {{ ansible_eth1.ipv4.address }}"
+#
+#    - name: Restarting Kubelet service
+#      become: yes
+#      become_method: sudo
+#      become_user: root
+#      command: "{{ item }}"
+#      with_items:
+#        - systemctl daemon-reload
+#        - systemctl restart kubelet
 ...
 

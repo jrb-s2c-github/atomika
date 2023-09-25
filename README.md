@@ -11,7 +11,7 @@ Ansible scripts amdended from https://subok-tech.com/installing-kubernetes-using
 5) Run k8s_workers.yml to join the worker nodes
 
 ## Preparing a Linux box to take commands from Ansible
-In the multipass folder is a cloud_init.yml file to prepare ubuntu nodes to receive intsruction from Ansible.
+In the multipass folder is a cloud_init.yml file to prepare ubuntu nodes to receive instruction from Ansible.
 The master key is in the master key folder.
 
 **Alternatively**, it can be done manually as follows:

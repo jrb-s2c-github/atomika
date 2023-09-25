@@ -1,0 +1,79 @@
+- hosts: masters
+  gather_facts: yes
+  connection: ssh
+  vars_prompt:
+    - name: "metal_lb_range"
+      prompt: "Enter the IP range from which the load balancer IP can be assigned?"
+      private: no
+      default: 192.168.68.200-192.168.69.210
+  tasks:
+    - name: Installing Nginx Ingress Controller
+      become_user: "{{ ansible_user }}"
+      become_method: sudo
+      #     become: yes
+      command: kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.0.5/deploy/static/provider/cloud/deploy.yaml
+      run_once: true
+
+    - name: FIXME
+      become_user: "{{ ansible_user }}"
+      become_method: sudo
+      #     become: yes
+      command: kubectl delete -A ValidatingWebhookConfiguration ingress-nginx-admission
+      run_once: true
+
+    - name: Install Metallb1.
+      become_user: "{{ ansible_user }}"
+      become_method: sudo
+      become: yes
+      shell: 'kubectl -n kube-system get configmap kube-proxy -o yaml > /home/{{ ansible_user }}/kube-proxy.yml'
+
+    - name: Install Metallb2.
+      become_user: "{{ ansible_user }}"
+      become_method: sudo
+      become: yes
+      command: "{{ item }}"
+      with_items:
+        - "sed -i 's/strictARP: false/strictARP: true/' /home/{{ ansible_user }}/kube-proxy.yml"
+        - kubectl apply -f /home/{{ ansible_user }}/kube-proxy.yml
+        - kubectl apply -f https://raw.githubusercontent.com/metallb/metallb/v0.13.11/config/manifests/metallb-native.yaml
+
+    - name: Prepare L2Advertisement.
+      become_user: "{{ ansible_user }}"
+      become_method: sudo
+      copy:
+        dest: "~/l2advertisement.yml"
+        content: |
+          apiVersion: metallb.io/v1beta1
+          kind: L2Advertisement
+          metadata:
+            name: example
+            namespace: metallb-system
+
+    - name: Prepare address pool.
+      become_user: "{{ ansible_user }}"
+      become_method: sudo
+      copy:
+        dest: "~/address-pool.yml"
+        content: |
+          apiVersion: metallb.io/v1beta1
+          kind: IPAddressPool
+          metadata:
+            name: first-pool
+            namespace: metallb-system
+          spec:
+            addresses:
+            - {{ metal_lb_range }}
+
+    - pause: seconds=30
+
+    - name: Load address pool
+      become_user: "{{ ansible_user }}"
+      become_method: sudo
+      command: kubectl apply -f ~/address-pool.yml
+
+    - name: Load L2Advertisement
+      become_user: "{{ ansible_user }}"
+      become_method: sudo
+      command: kubectl apply -f ~/l2advertisement.yml
+...
+

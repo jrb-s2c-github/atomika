@@ -7,6 +7,7 @@
   - name: Add ansible user
     ansible.builtin.user:
       name: ansible
+      shell: /bin/bash
     become: true
 
   - name: Add SSH key for ansible

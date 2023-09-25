@@ -76,7 +76,7 @@
  - name: Install containerd
    apt:
      name:
-       - containerd.io=={{ containerd_version }}
+       - containerd.io={{ containerd_version }}
      state: present
 #
 # - name: Install containerd.

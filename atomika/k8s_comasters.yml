@@ -1,23 +1,27 @@
 # k8s_workers.yml
 ---
-- hosts: masters
-  remote_user: vmadmin
+- hosts: comasters
+  remote_user: "{{ ansible_user }}"
   become: yes
   become_method: sudo
   become_user: root
   gather_facts: yes
   connection: ssh
+  roles:
+    - atomika_base
 
+- hosts: masters
   tasks:
-
-   - name: Get the token for joining the nodes with Kuberentes master.
+   - name: Get the token for joining the nodes with Kubernetes master.
+     become_user: "{{ ansible_user }}"
      shell: kubeadm token create  --print-join-command
      register: kubernetes_join_command
 
-   - debug:
-       msg: "{{ kubernetes_join_command.stdout }}"
+#   - debug:
+#       msg: "{{ kubernetes_join_command.stdout }}"
 
-   - name: Generate the secret for joining the nodes with Kuberentes master.
+   - name: Generate the secret for joining the nodes with Kubernetes master.
+     become: yes
      shell: kubeadm init phase upload-certs --upload-certs
      register: kubernetes_join_secret
        
@@ -56,20 +60,20 @@
    - debug:
        msg: "{{ joined_or_not.stdout }}"
 
-- hosts: "masters,comasters"
-  #remote_user: k8s5gc
-  #become: yes
-  #become_method: sudo
-  become_user: root
-  gather_facts: yes
-  connection: ssh
-
-  tasks:
-
-   - name: Configure kubectl command auto-completion.
-     lineinfile:
-       dest: /home/{{ ansible_user }}/.bashrc
-       line: 'source <(kubectl completion bash)'
-       insertafter: EOF
+#- hosts: "masters,comasters"
+#  #remote_user: k8s5gc
+#  #become: yes
+#  #become_method: sudo
+#  become_user: root
+#  gather_facts: yes
+#  connection: ssh
+#
+#  tasks:
+#
+#   - name: Configure kubectl command auto-completion.
+#     lineinfile:
+#       dest: /home/{{ ansible_user }}/.bashrc
+#       line: 'source <(kubectl completion bash)'
+#       insertafter: EOF
 ...
 
