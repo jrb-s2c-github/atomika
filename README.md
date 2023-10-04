@@ -3,6 +3,10 @@ Ansible scripts amdended from https://subok-tech.com/installing-kubernetes-using
 
 ## Another description on how to use these Ansible yaml to boot you own out-of-cloud cluster can be read at https://dzone.com/articles/ansible-boots-kubernetes.
 
+## Contributing
+Should you wish to contribute or improve, feel free to fork and create a pull request back for me to approve. Alternatvely drop me a message on linkedin at https://www.linkedin.com/in/janrb/ 
+to be added as a contributor.
+
 ## Essentials
 1) Edit the inventory file to  
    1) add master node, co-master nodes for high availability and worker nodes;
