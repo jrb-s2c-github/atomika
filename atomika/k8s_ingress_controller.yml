@@ -31,11 +31,7 @@
       become_user: "{{ ansible_user }}"
       become_method: sudo
       become: yes
-      command: "{{ item }}"
-      with_items:
-        - "sed -i 's/strictARP: false/strictARP: true/' /home/{{ ansible_user }}/kube-proxy.yml"
-        - kubectl apply -f /home/{{ ansible_user }}/kube-proxy.yml
-        - kubectl apply -f https://raw.githubusercontent.com/metallb/metallb/v0.13.11/config/manifests/metallb-native.yaml
+      command: kubectl apply -f https://raw.githubusercontent.com/metallb/metallb/v0.13.11/config/manifests/metallb-native.yaml
 
     - name: Prepare L2Advertisement.
       become_user: "{{ ansible_user }}"
