@@ -39,7 +39,7 @@
       copy:
         dest: "~/l2advertisement.yml"
         content: |
-          apiVersion: metallb.io/v1beta1
+          apiVersion: metallb.io/v1
           kind: L2Advertisement
           metadata:
             name: example
@@ -51,7 +51,7 @@
       copy:
         dest: "~/address-pool.yml"
         content: |
-          apiVersion: metallb.io/v1beta1
+          apiVersion: metallb.io/v1
           kind: IPAddressPool
           metadata:
             name: first-pool
