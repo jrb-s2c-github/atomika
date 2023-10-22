@@ -1,0 +1,10 @@
+- hosts: all
+  become: yes
+  become_method: sudo
+  become_user: root
+  gather_facts: yes
+  connection: ssh
+
+  tasks:
+    - name: kubeadm reset
+      ansible.builtin.shell: yes | kubeadm reset

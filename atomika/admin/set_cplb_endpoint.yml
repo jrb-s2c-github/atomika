@@ -1,0 +1,15 @@
+- hosts: all
+  become: yes
+  become_method: sudo
+  become_user: root
+  gather_facts: yes
+  connection: ssh
+
+  vars_prompt:
+    - name: "control_plane_endpoint"
+      prompt: "Enter the IP address of the control plane load balancer?"
+      private: no
+
+  tasks:
+    - name: Add endpoint to hosts
+      ansible.builtin.import_tasks: ../internal/i_set_cplb_endpoint.yml

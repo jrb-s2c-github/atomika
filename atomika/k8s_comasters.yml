@@ -1,5 +1,6 @@
 # k8s_workers.yml
 ---
+# add masters into hosts as ip address of k8scp should be changed for main master as well in /etc/hosts
 - hosts: comasters
   remote_user: "{{ ansible_user }}"
   become: yes
@@ -9,6 +10,13 @@
   connection: ssh
   roles:
     - atomika_base
+
+- hosts: proxies
+  vars:
+    comaster_names: "{{ query('inventory_hostnames', 'comasters') }}"
+  tasks:
+  - name: Deploy and configure HAProxy
+    ansible.builtin.import_tasks: ha_proxy.yml
 
 - hosts: masters
   tasks:
@@ -24,7 +32,6 @@
      become: yes
      shell: kubeadm init phase upload-certs --upload-certs
      register: kubernetes_join_secret
-       
 
    - name: Copy join command to local file.
      become: false
@@ -33,13 +40,19 @@
 
 - hosts: comasters
   #remote_user: k8s5gc
-  #become: yes
-  #become_metihod: sudo
+  become: yes
+  become_method: sudo
   become_user: root
   gather_facts: yes
   connection: ssh
+  # TODO use set_facts instead - see kubectl_user for example
+  # first set it to main master so comasters can be joined to master and then later set k8scp to ip of haproxy TODO - is this required?
+  vars:
+    control_plane_endpoint: "{{ hostvars['host1']['ansible_host'] }}"
 
   tasks:
+
+   - ansible.builtin.import_tasks: internal/i_set_cplb_endpoint.yml
 
    - name: Copy join command to worker nodes.
      become: yes
@@ -50,7 +63,7 @@
        dest: /tmp/kubernetes_join_command
        mode: 0700
 
-   - name: Join the Worker nodes with the master.
+   - name: Join the comasters with the master.
      become: yes
      become_method: sudo
      become_user: root
@@ -59,6 +72,24 @@
 
    - debug:
        msg: "{{ joined_or_not.stdout }}"
+
+   - name: Copy kube config for designated users
+     ansible.builtin.import_tasks: internal/i_copy_kube_config.yml
+
+- hosts: "masters,comasters,workers"
+  become: yes
+  become_method: sudo
+  become_user: root
+  gather_facts: yes
+  connection: ssh
+  # TODO use set_facts instead - see kubectl_user for example
+  vars:
+    control_plane_endpoint: "{{ hostvars['haproxy']['ansible_host'] }}"
+
+  tasks:
+    - name: Add endpoint of haproxy to hosts
+      ansible.builtin.import_tasks: internal/i_set_cplb_endpoint.yml
+
 
 #- hosts: "masters,comasters"
 #  #remote_user: k8s5gc

@@ -1,0 +1,62 @@
+#---
+#- hosts: proxies
+#  remote_user: "{{ ansible_user }}"
+#  become: yes
+#  become_method: sudo
+#  become_user: root
+#  gather_facts: yes
+#  connection: ssh
+#  vars:
+#    comaster_names: "{{ query('inventory_hostnames', 'comasters') }}"
+#
+#  tasks:
+  - name: Install HAProxy
+    become: true
+    ansible.builtin.apt:
+      name: haproxy=2.0.31-0ubuntu0.2
+      state: present
+
+  - name: Replace line in haproxy.cfg1.
+    become: true
+    lineinfile:
+      dest: /etc/haproxy/haproxy.cfg
+      regexp: 'httplog'
+      line: "        option  tcplog"
+
+  - name: Replace line in haproxy.cfg2.
+    become: true
+    lineinfile:
+      dest: /etc/haproxy/haproxy.cfg
+      regexp: 'mode'
+      line: "        mode    tcp"
+
+  - name: Add block to haproxy.cfg1
+    become: true
+    ansible.builtin.blockinfile:
+      backup: false
+      path: /etc/haproxy/haproxy.cfg
+      block: |-
+        frontend proxynode 
+           bind *:80
+           bind *:6443
+           stats uri /proxystats
+           default_backend k8sServers
+        backend k8sServers
+           balance roundrobin
+           server cp {{ hostvars['host1']['ansible_host'] }}:6443 check
+        {% for item in comaster_names -%}
+              server {{ item }} {{ hostvars[ item ]['ansible_host'] }}:6443 check
+        {% endfor -%}
+        listen stats
+           bind :9999
+           mode http
+           stats enable
+           stats hide-version
+           stats uri /stats
+
+  - name: (Re)Start HAProxy service
+    become: true
+    ansible.builtin.service:
+      name: haproxy
+      enabled: true
+      state: restarted

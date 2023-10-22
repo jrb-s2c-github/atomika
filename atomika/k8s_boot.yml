@@ -1,0 +1,38 @@
+- hosts: masters, comasters, workers
+  become: yes
+  become_method: sudo
+  become_user: root
+  gather_facts: yes
+  connection: ssh
+  vars_prompt:
+    - name: kubectl_user_temp
+      prompt: "Enter the name of the existing user that will execute kubectl commands?"
+      private: no
+  tasks:
+    - set_fact:
+        kubectl_user: "{{ kubectl_user_temp }}"
+
+- hosts: masters
+  become: yes
+  become_method: sudo
+  become_user: root
+  gather_facts: yes
+  connection: ssh
+  vars:
+    control_plane_endpoint: "{{ hostvars['host1']['ansible_host'] }}"
+
+  tasks:
+    - ansible.builtin.import_tasks: internal/i_set_cplb_endpoint.yml
+
+- name: Boot master node.
+  ansible.builtin.import_playbook: k8s_master_init.yml
+
+- name: Boot co-masters.
+  ansible.builtin.import_playbook: k8s_comasters.yml
+
+- name: Boot worker nodes.
+  ansible.builtin.import_playbook: k8s_workers.yml
+
+- name: Install & configure IngressController and LoadBalancers.
+  ansible.builtin.import_playbook: k8s_ingress_controller.yml
+...

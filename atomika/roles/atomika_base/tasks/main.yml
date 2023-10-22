@@ -14,7 +14,7 @@
      regexp: swap
      state: absent
 
- - name: Create a empty file for containerd module.
+ - name: Create an empty file for containerd module.
    copy:
      content: ""
      dest: /etc/modules-load.d/containerd.conf
@@ -27,7 +27,7 @@
           overlay
           br_netfilter
 
- - name: Create a empty file for kubernetes sysctl params.
+ - name: Create an empty file for kubernetes sysctl params.
    copy:
      content: ""
      dest: /etc/sysctl.d/99-kubernetes-cri.conf

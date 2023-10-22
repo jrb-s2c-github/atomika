@@ -1,0 +1,62 @@
+- name: Create directory for kube config of {{ ansible_user }}.
+  become: yes
+  file:
+    path: /home/{{ ansible_user }}/.kube
+    state: directory
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
+    mode: 0755
+
+- name: Copy /etc/kubernetes/admin.conf to user home directory /home/{{ ansible_user }}/.kube/config.
+  copy:
+    src: /etc/kubernetes/admin.conf
+    dest: /home/{{ ansible_user }}/.kube/config
+    remote_src: yes
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
+    mode: '0640'
+
+- name: Remove the cache directory.
+  file:
+    path: /home/{{ ansible_user }}/.kube/cache
+    state: absent
+
+#- debug:
+#    msg: "{{ hostvars.host1.kubectl_user }}"
+
+- name: Create directory for kube config of {{ hostvars.host1.kubectl_user }}."
+  become: yes
+  file:
+    path: /home/{{ hostvars.host1.kubectl_user }}/.kube
+    state: directory
+    owner: "{{ hostvars.host1.kubectl_user }}"
+    group: "{{ hostvars.host1.kubectl_user }}"
+    mode: 0755
+
+- name: Copy /etc/kubernetes/admin.conf to user home directory /home/{{ hostvars.host1.kubectl_user }}/.kube/config.
+  copy:
+    src: /etc/kubernetes/admin.conf
+    dest: /home/{{ hostvars.host1.kubectl_user }}/.kube/config
+    remote_src: yes
+    owner: "{{ hostvars.host1.kubectl_user }}"
+    group: "{{ hostvars.host1.kubectl_user }}"
+    mode: '0640'
+
+- name: Remove the cache directory.
+  file:
+    path: /home/{{ hostvars.host1.kubectl_user }}/.kube/cache
+    state: absent
+
+- name: Configure kubectl command auto-completion for {{ ansible_user }}.
+  lineinfile:
+    dest: /home/{{ ansible_user }}/.bashrc
+    line: 'source <(kubectl completion bash)'
+    insertafter: EOF
+
+- name: Configure kubectl command auto-completion for {{ hostvars.host1.kubectl_user }}.
+  lineinfile:
+    dest: /home/{{ hostvars.host1.kubectl_user }}/.bashrc
+    line: 'source <(kubectl completion bash)'
+    insertafter: EOF
+
+- pause: seconds=30

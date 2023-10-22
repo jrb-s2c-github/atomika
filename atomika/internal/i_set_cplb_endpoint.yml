@@ -1,0 +1,6 @@
+- name: Add entry for k8scp to hosts file.
+  lineinfile:
+    dest: /etc/hosts
+    insertbefore: EOF
+    regexp: 'k8scp'
+    line: "{{ control_plane_endpoint }} k8scp"
