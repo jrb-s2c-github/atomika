@@ -2,39 +2,41 @@ masters:
   hosts:
     # do not change name away from host1 - there will only ever be one initial master
     host1:
-      ansible_host: "192.168.68.114"
+      ansible_host: "192.168.68.118"
       ansible_connection: ssh
       ansible_user: ansible
       ansible_ssh_common_args: "-o ControlMaster=no -o ControlPath=none"
       ansible_ssh_private_key_file: ./bootstrap/ansible
-proxies:
-  hosts:
+    # ONLY UNCOMMENT WHEN THERE ARE MORE THAN ONE COMTROL-PLANE
+#proxies:
+#  hosts:
     # do not change name away from haproxy - there will only ever be one haproxy
-    haproxy:
-      ansible_host: "192.168.68.115"
-      ansible_connection: ssh
-      ansible_user: ansible
-      ansible_ssh_common_args: "-o ControlMaster=no -o ControlPath=none"
-      ansible_ssh_private_key_file: ./bootstrap/ansible
-comasters:
-  hosts:
-    co-master1:
-      ansible_connection: ssh
-      ansible_host: "192.168.68.122"
-      ansible_user: ansible
-      ansible_ssh_common_args: "-o ControlMaster=no -o ControlPath=none"
-      ansible_ssh_private_key_file: ./bootstrap/ansible
-    co-master2:
-      ansible_connection: ssh
-      ansible_host: "192.168.68.116"
-      ansible_user: ansible
-      ansible_ssh_common_args: "-o ControlMaster=no -o ControlPath=none"
-      ansible_ssh_private_key_file: ./bootstrap/ansible
+#    haproxy:
+#      ansible_host: "192.168.68.115"
+#      ansible_connection: ssh
+#      ansible_user: ansible
+#      ansible_ssh_common_args: "-o ControlMaster=no -o ControlPath=none"
+#      ansible_ssh_private_key_file: ./bootstrap/ansible
+  # ONLY UNCOMMENT WHEN THERE ARE MORE THAN ONE COMTROL-PLANE
+#comasters:
+#  hosts:
+#    co-master1:
+#      ansible_connection: ssh
+#      ansible_host: "192.168.68.122"
+#      ansible_user: ansible
+#      ansible_ssh_common_args: "-o ControlMaster=no -o ControlPath=none"
+#      ansible_ssh_private_key_file: ./bootstrap/ansible
+#    co-master2:
+#      ansible_connection: ssh
+#      ansible_host: "192.168.68.116"
+#      ansible_user: ansible
+#      ansible_ssh_common_args: "-o ControlMaster=no -o ControlPath=none"
+#      ansible_ssh_private_key_file: ./bootstrap/ansible
 workers:
   hosts:
     client1:
       ansible_connection: ssh
-      ansible_host: "192.168.68.118"
+      ansible_host: "192.168.68.120"
       ansible_user: ansible
       ansible_ssh_common_args: "-o ControlMaster=no -o ControlPath=none"
       ansible_ssh_private_key_file: ./bootstrap/ansible

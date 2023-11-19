@@ -12,7 +12,7 @@
     - set_fact:
         kubectl_user: "{{ kubectl_user_temp }}"
 
-- hosts: masters
+- hosts: masters, workers
   become: yes
   become_method: sudo
   become_user: root
@@ -29,6 +29,7 @@
 
 - name: Boot co-masters.
   ansible.builtin.import_playbook: k8s_comasters.yml
+  when: groups['comasters'] is defined
 
 - name: Boot worker nodes.
   ansible.builtin.import_playbook: k8s_workers.yml
