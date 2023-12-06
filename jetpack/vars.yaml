@@ -1,0 +1,43 @@
+apps:
+  - name: hello1
+    git_url: https://github.com/jrb-s2c-github/spinnaker_tryout.git
+    jib_dir: hello_svc
+    image: s2c/hello_svc
+    namespace: env1
+    git_branch: kustomize
+    application_properties:
+      application.properties: |
+        my_name: LocalKubeletEnv1
+  - name: hello2
+    git_url: https://github.com/jrb-s2c-github/spinnaker_tryout.git
+    jib_dir: hello_svc
+    image: s2c/hello_svc
+    namespace: env2
+    config_map_path:
+    git_branch: kustomize
+    application_properties:
+      application.properties: |
+        my_name: LocalKubeletEnv2
+#  - name: mystery
+#    git_url: "{{ vault_git_url }}"
+#    jib_dir: harvester
+#    image: s2c/harvester
+#    namespace: env1
+#    git_branch: main
+#    application_properties:
+#      application.properties: |
+#        my_name: LocalKubeletEnv1
+
+
+# Leave on www.demo.io unless you own the domain and it is not referenced in any DNS registry anywhere
+ingress:
+  host: www.demo.io
+  rules:
+    - service: hello1
+      namespace: env1
+      ingress_path: /env1/hello
+      service_path: /
+    - service: hello2
+      namespace: env2
+      ingress_path: /env2/hello
+      service_path: /

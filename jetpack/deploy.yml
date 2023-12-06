@@ -1,0 +1,257 @@
+- hosts: workers
+#  become: yes
+#  become_method: sudo
+#  become_user: root
+  gather_facts: yes
+  connection: ssh
+  vars_files:
+    - vars.yaml
+#  vars_prompt:
+#    - name: kubectl_user_temp
+#      prompt: "Enter the name of the existing user that will execute kubectl commands?"
+#      private: no
+  tasks:
+#    - set_fact:
+#        kubectl_user: "{{ kubectl_user_temp }}"
+
+# should this step take forever, SSH is prompting for user authorization and the remote host's public key should be added to /etc/ssh/ssh_known_hosts
+# with key scan: ssh-keyscan -H remote_host.com >> /etc/ssh/ssh_known_host
+    - name: Git checkouts
+      ansible.builtin.git:
+        repo: "{{ item.git_url }}"
+        dest: "~/{{ item.name }}"
+        version: "{{ item.git_branch }}"
+      loop:
+        "{{ apps }}"
+
+    - name: Install Maven
+      ansible.builtin.apt:
+        name: maven
+        state: present
+      become: true
+
+    - name: Run JIB builds
+      ansible.builtin.command: "mvn clean compile jib:buildTar -Dimage={{ item.name }}:{{ item.namespace }}"
+      args:
+        chdir: "~/{{ item.name }}/{{ item.jib_dir }}"
+      register: mvn_out
+#      become: true
+#      changed_when: '"BUILD SUCCESS" in mvn_output'
+      loop:
+        "{{ apps }}"
+
+    - name: Print result of KIB build
+      ansible.builtin.debug:
+        var: mvn_out
+
+# https://blog.scottlowe.org/2020/01/25/manually-loading-container-images-with-containerd/
+    - name: Load images into containerd
+      ansible.builtin.command: ctr -n=k8s.io images import jib-image.tar
+      args:
+        chdir: "/home/ansible/{{ item.name }}/{{ item.jib_dir }}/target"
+      register: ctr_out
+      become: true
+      #      changed_when: '"BUILD SUCCESS" in mvn_output'
+      loop:
+        "{{ apps }}"
+
+    - name: Print result of CTR Load
+      ansible.builtin.debug:
+        var: ctr_out
+
+#    - name: Write deployment.yml
+#      ansible.builtin.template:
+#        src: templates/deployment.yml
+#        dest: "~/{{ item.name }}/deployment.yml"
+#      loop:
+#        "{{ apps }}"
+
+- hosts: masters
+#  become: yes
+  #  become_method: sudo
+  #  become_user: root
+  gather_facts: yes
+  connection: ssh
+  vars_files:
+    - vars.yaml
+
+  tasks:
+    - name: Install PIP
+      ansible.builtin.apt:
+        name: pip
+        state: present
+      become: true
+
+    - name: install Python pre-requisites for Kubernetes
+      ansible.builtin.pip:
+        name:
+          - openshift
+          - pyyaml
+          - kubernetes
+
+    - name: Remove all k8s namespaces
+      remote_user: ansible
+      kubernetes.core.k8s:
+        kubeconfig: /home/ansible/.kube/config
+        name: "{{ item.namespace }}"
+        api_version: v1
+        kind: Namespace
+        state: absent
+      loop:
+        "{{ apps }}"
+
+    - pause: seconds=30
+
+    - name: Create k8s namespaces
+      remote_user: ansible
+      kubernetes.core.k8s:
+        kubeconfig: /home/ansible/.kube/config
+        name: "{{ item.namespace }}"
+        api_version: v1
+        kind: Namespace
+        state: present
+      loop:
+        "{{ apps }}"
+
+
+    - name: Create application.property configmaps
+      kubernetes.core.k8s:
+        kubeconfig: /home/ansible/.kube/config
+        namespace: "{{ item.namespace }}"
+        state: present
+        definition:
+          apiVersion: v1
+          kind: ConfigMap
+          metadata:
+            name: "{{ item.name }}-cm"
+          data:
+            "{{ item.application_properties }}"
+      loop:
+        "{{ apps }}"
+
+    - name: Create deployments
+      kubernetes.core.k8s:
+        kubeconfig: /home/ansible/.kube/config
+        namespace: "{{ item.namespace }}"
+        state: present
+        definition:
+          apiVersion: apps/v1
+          kind: Deployment
+          metadata:
+            creationTimestamp: null
+            labels:
+              app: "{{ item.name }}"
+            name: "{{ item.name }}"
+          spec:
+            replicas: 1
+            selector:
+              matchLabels:
+                app: "{{ item.name }}"
+            strategy: { }
+            template:
+              metadata:
+                creationTimestamp: null
+                labels:
+                  app: "{{ item.name }}"
+              spec:
+                containers:
+                  - image: "{{ item.name }}:{{ item.namespace }}"
+                    name: "{{ item.name }}"
+                    resources: { }
+                    imagePullPolicy: IfNotPresent
+                    volumeMounts:
+                      - mountPath: /config
+                        name: config
+                volumes:
+                  - configMap:
+                      items:
+                        - key: application.properties
+                          path: application.properties
+                      name: "{{ item.name }}-cm"
+                    name: config
+          status: { }
+      loop:
+        "{{ apps }}"
+
+    #      TODO change NodePort to ClusterIP once ingress is in on the action
+    - name: Create services
+      kubernetes.core.k8s:
+        kubeconfig: /home/ansible/.kube/config
+        namespace: "{{ item.namespace }}"
+        state: present
+        definition:
+          apiVersion: v1
+          kind: List
+          items:
+            - apiVersion: v1
+              kind: Service
+              metadata:
+                creationTimestamp: null
+                labels:
+                  app: "{{ item.name }}"
+                name: "{{ item.name }}"
+              spec:
+                ports:
+                  - port: 80
+                    protocol: TCP
+                    targetPort: 8080
+                selector:
+                  app: "{{ item.name }}"
+                type: ClusterIP
+              status:
+                loadBalancer: {}
+      loop:
+        "{{ apps }}"
+
+    - name: Create ingress master
+      kubernetes.core.k8s:
+        kubeconfig: /home/ansible/.kube/config
+        namespace: default
+        state: present
+        definition:
+          apiVersion: networking.k8s.io/v1
+          kind: Ingress
+          metadata:
+            name: ingress-master
+            annotations:
+              nginx.org/mergeable-ingress-type: "master"
+          spec:
+            ingressClassName: nginx
+            rules:
+              - host: "{{ ingress.host }}"
+
+    - name: Create ingress minions
+      kubernetes.core.k8s:
+        kubeconfig: /home/ansible/.kube/config
+        namespace: "{{ item.namespace }}"
+        state: present
+        definition:
+          apiVersion: networking.k8s.io/v1
+          kind: Ingress
+          metadata:
+            annotations:
+              nginx.ingress.kubernetes.io/rewrite-target: " {{ item.service_path }} "
+              nginx.org/mergeable-ingress-type: "minion"
+            name: "ingress-{{ item.namespace }}"
+          spec:
+            ingressClassName: nginx
+            rules:
+              - host: "{{ ingress.host }}"
+                http:
+                  paths:
+                    - path: "{{ item.ingress_path }}"
+                      pathType: Prefix
+                      backend:
+                        service:
+                          name: "{{ item.service }}"
+                          port:
+                            number: 80
+      #                    - path: /bar
+      #                      pathType: Prefix
+      #                      backend:
+      #                        service:
+      #                          name: service2
+      #                          port:
+      #                            number: 8080
+      loop:
+        "{{ ingress.rules }}"
