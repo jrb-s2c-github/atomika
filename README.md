@@ -1,7 +1,7 @@
 # Atomika
 Ansible scripts amended from https://subok-tech.com/installing-kubernetes-using-ansible-on-ubuntu-20-04/ to boot a local Kubernetes cluster (both windows and linux worker nodes) for use as a shared development environment and/or host for a Spinnaker CI/CD constellation (see https://github.com/jrb-s2c-github/spinnaker_tryout) Tested on Ubuntu 20.04.
 
-## Another description on how to use these Ansible playbooks to boot your own out-of-cloud cluster can be read at https://dzone.com/articles/anatomy-of-a-high-availability-kubernetes-cluster.
+## Another description on how to use these Ansible playbooks to boot your own out-of-cloud cluster can be read at https://dzone.com/articles/fast-feature-branch-deployments-of-micro-services.
 
 ## Contributing
 Should you wish to contribute or improve, feel free to fork and create a pull request back for me to approve. Alternatvely drop me a message on linkedin at https://www.linkedin.com/in/janrb/ 
