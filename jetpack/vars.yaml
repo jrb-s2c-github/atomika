@@ -1,6 +1,6 @@
 apps:
   - name: hello1
-    git_url: https://github.com/jrb-s2c-github/spinnaker_tryout.git
+    git_repo: spinnaker_tryout
     jib_dir: hello_svc
     image: s2c/hello_svc
     namespace: env1
@@ -9,7 +9,7 @@ apps:
       application.properties: |
         my_name: LocalKubeletEnv1
   - name: hello2
-    git_url: https://github.com/jrb-s2c-github/spinnaker_tryout.git
+    git_repo: spinnaker_tryout
     jib_dir: hello_svc
     image: s2c/hello_svc
     namespace: env2

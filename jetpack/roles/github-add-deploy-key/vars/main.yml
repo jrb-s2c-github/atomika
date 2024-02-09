@@ -1,0 +1,28 @@
+# vars/main.yml
+
+# Name of the SSH key (e.g. git_ssh_key)
+key_title: <name of the SSH key>
+
+# Location of the SSH key to be (e.g. ~/.ssh/id_rsa_git)
+key_path: /path/to/ssh/key
+
+# # GitHub personal access token
+github_access_token: <Your Encrypted GitHub Token>
+
+# Git repository to be cloned. Must be SSH (not https)
+git_repo: ssh://git@github.com/path/to/repository.git
+
+# Branch of the git repository (e.g. master)
+#git_branch: <repository branch>
+
+# Directory where the repository will be cloned (e.g. /home/user/repo_name)
+clone_dest: /path/to/clone/directory
+
+# Location of the SSH known hosts file (e.g. ~/.ssh/known_hosts)
+known_hosts_path: /path/to/ssh/known_hosts/file
+
+# Location of the git binary (e.g. /usr/bin/git)
+git_executable: git
+
+# Github FQDN
+git_server_fqdn: github.com

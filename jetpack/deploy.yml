@@ -1,28 +1,37 @@
 - hosts: workers
-#  become: yes
-#  become_method: sudo
-#  become_user: root
   gather_facts: yes
   connection: ssh
   vars_files:
     - vars.yaml
-#  vars_prompt:
-#    - name: kubectl_user_temp
-#      prompt: "Enter the name of the existing user that will execute kubectl commands?"
-#      private: no
+  vars_prompt:
+    - name: github_token
+      prompt: "Enter your github personal access token?"
+      private: true
   tasks:
-#    - set_fact:
-#        kubectl_user: "{{ kubectl_user_temp }}"
-
-# should this step take forever, SSH is prompting for user authorization and the remote host's public key should be added to /etc/ssh/ssh_known_hosts
-# with key scan: ssh-keyscan -H remote_host.com >> /etc/ssh/ssh_known_host
-    - name: Git checkouts
-      ansible.builtin.git:
-        repo: "{{ item.git_url }}"
-        dest: "~/{{ item.name }}"
-        version: "{{ item.git_branch }}"
+    - name: Checking out sources
+      ansible.builtin.include_role:
+        name: github-add-deploy-key
+      vars:
+        key_path: ~/gh_deploy_key
+        known_hosts_path: ~/.ssh/known_hosts
+        key_title: ansible_key
+        github_access_token: "{{ github_token }}"
+        clone_dest: "~/{{ item.name }}"
+        github_account_id: jrb-s2c-github
+        repo: "{{ item.git_repo }}"
+        branch: "{{ item.git_branch }}"
       loop:
         "{{ apps }}"
+
+#  # should this step take forever, SSH is prompting for user authorization and the remote host's public key should be added to /etc/ssh/ssh_known_hosts
+## with key scan: ssh-keyscan -H remote_host.com >> /etc/ssh/ssh_known_host
+#    - name: Git checkouts
+#      ansible.builtin.git:
+#        repo: "https://github.com/jrb-s2c-github/{{ item.git_repo }}.git"
+#        dest: "~/{{ item.name }}"
+#        version: "{{ item.git_branch }}"
+#      loop:
+#        "{{ apps }}"
 
     - name: Install Maven
       ansible.builtin.apt:
@@ -59,17 +68,7 @@
       ansible.builtin.debug:
         var: ctr_out
 
-#    - name: Write deployment.yml
-#      ansible.builtin.template:
-#        src: templates/deployment.yml
-#        dest: "~/{{ item.name }}/deployment.yml"
-#      loop:
-#        "{{ apps }}"
-
 - hosts: masters
-#  become: yes
-  #  become_method: sudo
-  #  become_user: root
   gather_facts: yes
   connection: ssh
   vars_files:
@@ -173,7 +172,6 @@
       loop:
         "{{ apps }}"
 
-    #      TODO change NodePort to ClusterIP once ingress is in on the action
     - name: Create services
       kubernetes.core.k8s:
         kubeconfig: /home/ansible/.kube/config
