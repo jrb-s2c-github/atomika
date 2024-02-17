@@ -9,6 +9,7 @@ masters:
       ansible_ssh_private_key_file: ./bootstrap/ansible
     # ONLY UNCOMMENT WHEN THERE ARE MORE THAN ONE CONTROL-PLANE
 #proxies:
+    
 #  hosts:
     # do not change name away from haproxy - there will only ever be one haproxy
 #    haproxy:
