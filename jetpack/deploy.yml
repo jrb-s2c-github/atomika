@@ -39,19 +39,30 @@
         state: present
       become: true
 
+    - name: Maven install
+      ansible.builtin.command: "mvn install"
+      args:
+        chdir: "~/{{ item.name }}"
+      register: mvn_out
+      #      become: true
+      changed_when: mvn_out.rc == 0
+      loop:
+        "{{ apps }}"
+
     - name: Run JIB builds
       ansible.builtin.command: "mvn clean compile jib:buildTar -Dimage={{ item.name }}:{{ item.namespace }}"
       args:
         chdir: "~/{{ item.name }}/{{ item.jib_dir }}"
       register: mvn_out
+      changed_when: mvn_out.rc == 0
 #      become: true
 #      changed_when: '"BUILD SUCCESS" in mvn_output'
       loop:
         "{{ apps }}"
-
-    - name: Print result of KIB build
-      ansible.builtin.debug:
-        var: mvn_out
+#
+#    - name: Print result of JIB build
+#      ansible.builtin.debug:
+#        var: mvn_out
 
 # https://blog.scottlowe.org/2020/01/25/manually-loading-container-images-with-containerd/
     - name: Load images into containerd

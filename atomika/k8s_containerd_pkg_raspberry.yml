@@ -97,12 +97,14 @@
 
    - name: Add Google official GPG key
      apt_key:
-       url: https://packages.cloud.google.com/apt/doc/apt-key.gpg
+       url: https://pkgs.k8s.io/core:/stable:/v1.28/deb/Release.key
        state: present
 
+# TODO fix so that the version in the url corresponds to that in var.yaml and move to 1.29
+#  https://forum.linuxfoundation.org/discussion/864693/the-repository-http-apt-kubernetes-io-kubernetes-xenial-release-does-not-have-a-release-file
    - name: Add Kubernetes Repository
      apt_repository:
-       repo: deb http://apt.kubernetes.io/ kubernetes-xenial main
+       repo: deb https://pkgs.k8s.io/core:/stable:/v1.28/deb/
              #repo: deb http://apt.kubernetes.io/ kubernetes-xenial main
        state: present
        filename: kubernetes
