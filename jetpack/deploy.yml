@@ -153,7 +153,6 @@
               app: "{{ item.name }}"
             name: "{{ item.name }}"
           spec:
-            replicas: 1
             selector:
               matchLabels:
                 app: "{{ item.name }}"
@@ -180,6 +179,12 @@
                       name: "{{ item.name }}-cm"
                     name: config
           status: { }
+      loop:
+        "{{ apps }}"
+
+    - name: Scale relevant deployments
+      ansible.builtin.shell: "kubectl -n cc scale deployment {{ item.name }} --replicas {{ item.replicas }}"
+      when: item.replicas is defined
       loop:
         "{{ apps }}"
 
