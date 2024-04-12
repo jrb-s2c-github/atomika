@@ -41,3 +41,7 @@ ingress:
       namespace: env2
       ingress_path: /env2/hello
       service_path: /
+
+namespaces:
+  - name: cc
+
