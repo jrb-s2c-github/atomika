@@ -8,6 +8,12 @@
       prompt: "Enter your github personal access token?"
       private: true
   tasks:
+    - name: Install Maven
+      ansible.builtin.apt:
+        name: maven
+        state: present
+      become: true
+
     - name: Checking out sources
       ansible.builtin.include_role:
         name: github-add-deploy-key
@@ -33,11 +39,6 @@
 #      loop:
 #        "{{ apps }}"
 
-    - name: Install Maven
-      ansible.builtin.apt:
-        name: maven
-        state: present
-      become: true
 
     - name: Maven install
       ansible.builtin.command: "mvn install"
@@ -47,7 +48,7 @@
       #      become: true
       changed_when: mvn_out.rc == 0
       loop:
-        "{{ apps }}"
+        "{{ git_repos }}"
 
     - name: Run JIB builds
       ansible.builtin.command: "mvn clean compile jib:buildTar -Dimage={{ item.name }}:{{ item.namespace }}"
@@ -122,7 +123,6 @@
         state: present
       loop:
         "{{ namespaces }}"
-
 
     - name: Create application.property configmaps
       kubernetes.core.k8s:

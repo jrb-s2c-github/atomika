@@ -46,3 +46,6 @@ ingress:
 namespaces:
   - name: cc
 
+git_repos:
+  - name: hello1
+
