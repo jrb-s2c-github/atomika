@@ -1,4 +1,4 @@
-- hosts: workers
+- hosts: builder
   gather_facts: yes
   connection: ssh
   vars_files:
