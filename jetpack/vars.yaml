@@ -5,6 +5,7 @@ apps:
     image: s2c/hello_svc
     namespace: env1
     git_branch: kustomize
+    replicas: 3
     application_properties:
       application.properties: |
         my_name: LocalKubeletEnv1
