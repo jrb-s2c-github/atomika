@@ -124,6 +124,11 @@
       loop:
         "{{ namespaces }}"
 
+    - name: Running the kubectl pre-commands
+      ansible.builtin.shell: "{{ item }}"
+      loop:
+        "{{ pre_k8s_cmds }}"
+
     - name: Create application.property configmaps
       kubernetes.core.k8s:
         kubeconfig: /home/ansible/.kube/config
@@ -216,6 +221,12 @@
                 loadBalancer: {}
       loop:
         "{{ apps }}"
+
+
+    - name: Running the kubectl post-commands
+      ansible.builtin.shell: "{{ item }}"
+      loop:
+        "{{ post_k8s_cmds }}"
 
     - name: Create ingress master
       kubernetes.core.k8s:

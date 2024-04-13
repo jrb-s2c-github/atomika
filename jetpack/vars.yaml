@@ -49,3 +49,9 @@ namespaces:
 git_repos:
   - name: hello1
 
+pre_k8s_cmds:
+  - kubectl create -n cc deployment hazelcast --image=hazelcast/hazelcast:latest-snapshot-jdk21 --port=5701
+  - kubectl expose -n cc deployment hazelcast
+
+post_k8s_cmds:
+  - kubectl -n cc scale deployment hazelcast --replicas 2
