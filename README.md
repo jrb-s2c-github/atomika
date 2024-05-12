@@ -1,5 +1,5 @@
 # Atomika
-Ansible scripts amended from https://subok-tech.com/installing-kubernetes-using-ansible-on-ubuntu-20-04/ to boot a local Kubernetes cluster (both windows and linux worker nodes) for use as a shared development environment and/or host for a Spinnaker CI/CD constellation (see https://github.com/jrb-s2c-github/spinnaker_tryout) Tested on Ubuntu 20.04.
+Ansible scripts to boot a local Kubernetes cluster (both windows and linux worker nodes) for use as a shared development environment and/or host for a Spinnaker CI/CD constellation (see https://github.com/jrb-s2c-github/spinnaker_tryout) Tested on Ubuntu 20.04
 
 ## Another description on how to use these Ansible playbooks to boot your own out-of-cloud cluster can be read at https://dzone.com/articles/fast-feature-branch-deployments-of-micro-services and https://dzone.com/articles/safe-clones-with-ansible.
 
@@ -7,7 +7,7 @@ Ansible scripts amended from https://subok-tech.com/installing-kubernetes-using-
 Should you wish to contribute or improve, feel free to fork and create a pull request back for me to approve. Alternatvely drop me a message on linkedin at https://www.linkedin.com/in/janrb/ 
 to be added as a contributor.
 
-## Essentials
+## Guide for the impatient
 1) Edit the inventory file to  
    1) add master node, co-master nodes for high availability and worker nodes;
    2) point to location of private key to be found in master key folder (has to be done for each node).
@@ -49,10 +49,38 @@ The master key is in the master key folder.
 
 See https://kubernetes.github.io/ingress-nginx/deploy/#quick-start for more
 
+## Release Notes
+
+### V1
+First iteration of Atomika that:
+* allowed for local bootup of bare-metal/self-hosted K8S cluster that was used to host [Spinnaker](https://spinnaker.io/) CI/CD 
+constellation
+* was tested with Ubuntu multipass to allow nodes hosted on Windows machines
+* provided support for [MetalLB](https://metallb.io/) load balancer
+* can be opened up using a K8S Ingress
+
+See the [README.md](https://github.com/jrb-s2c-github/atomika/tree/V1) at the time for more.
+
+### V2
+
+### V3
+
+### V4
+
+### V5
+1) Improved documentation in README.md
+2) Upped version of K8S
+
+## Outstanding
+1) Move to more recent version of Ubuntu
+2) Improve flow of cluster bootup. Currently, common task are firstly done on the control planes then on the workers. It would
+be better to perform all the common task simultaneously.
+
 ## References 
 Read the first two to gain understanding what the two prompts starting the master boot-up are about. 
 1) https://kubernetes.io/docs/setup/production-environment/tools/kubeadm/high-availability/
 2) https://metallb.universe.tf/configuration/
+3) https://subok-tech.com/installing-kubernetes-using-ansible-on-ubuntu-20-04/
 3) https://phoenixnap.com/kb/how-to-create-sudo-user-on-ubuntu#:~:text=Most%20Linux%20systems%2C%20including%20Ubuntu%2C%20have%20a%20user,terminal%2C%20enter%20the%20command%3A%20usermod%20-aG%20sudo%20newuser
 4) https://multipass.run/docs/launch-command
 
