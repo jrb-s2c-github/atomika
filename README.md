@@ -20,6 +20,8 @@ to be added as a contributor.
 In the multipass folder is a cloud_init.yml file to prepare ubuntu nodes to receive instruction from Ansible.
 The master key is in the master key folder.
 
+TODO replaced with description of bootstrapping
+
 **Alternatively**, it can be done manually as follows:
 ### New Linux box:
 1. Sudo adduser vmadmin
@@ -62,6 +64,14 @@ constellation
 See the [README.md](https://github.com/jrb-s2c-github/atomika/tree/V1) at the time for more.
 
 ### V2
+Version two sees refactored code.
+
+It also became easier to prepare target machines to accept SSH connections from the Ansible controller. A new Ansible 
+playbook that bootstraps the SSH account to the same public key on all nodes was namely added.  
+
+More detail on V2:
+1) [README.md](https://github.com/jrb-s2c-github/atomika/blob/V2/README.md)
+2) [DZone.com article](https://dzone.com/articles/ansible-boots-kubernetes) 
 
 ### V3
 
@@ -75,6 +85,7 @@ See the [README.md](https://github.com/jrb-s2c-github/atomika/tree/V1) at the ti
 1) Move to more recent version of Ubuntu
 2) Improve flow of cluster bootup. Currently, common task are firstly done on the control planes then on the workers. It would
 be better to perform all the common task simultaneously.
+3) Remove cloudinit since it has been replaced by bootstrapping 
 
 ## References 
 Read the first two to gain understanding what the two prompts starting the master boot-up are about. 
