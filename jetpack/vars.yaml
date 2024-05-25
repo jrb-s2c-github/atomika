@@ -44,7 +44,7 @@ ingress:
       service_path: /
 
 namespaces:
-  - name: cc
+  - name: hello_ns
 
 git_repos:
   - name: hello1

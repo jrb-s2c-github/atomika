@@ -1,11 +1,218 @@
 # Atomika
-Ansible scripts to boot a local Kubernetes cluster (both windows and linux worker nodes) for use as a shared development environment and/or host for a Spinnaker CI/CD constellation (see https://github.com/jrb-s2c-github/spinnaker_tryout) Tested on Ubuntu 20.04
+This projects contains Ansible playbooks that boot a local Kubernetes cluster, even providing opinionated support for high 
+availability and opening it up using and Ingress. Additional playbooks allow the declaration of fast deployments of 
+qualifying Spring microservices from GitHub. Such a project should use Maven JIB for integration.
 
 ## Another description on how to use these Ansible playbooks to boot your own out-of-cloud cluster can be read at https://dzone.com/articles/fast-feature-branch-deployments-of-micro-services and https://dzone.com/articles/safe-clones-with-ansible.
 
 ## Contributing
 Should you wish to contribute or improve, feel free to fork and create a pull request back for me to approve. Alternatvely drop me a message on linkedin at https://www.linkedin.com/in/janrb/ 
 to be added as a contributor.
+
+## Booting an Atomika K8S cluster
+The first step is to clone the Atomika project.
+
+### Bootstrapping
+Bootstrapping adds the user account to all nodes that the Ansible control node will use to orchestrate the target nodes 
+or cluster memberss using SSH. As such it creates an account for the Ansible user and set up the private\public key 
+combination that will be used for authentication as the ansible user.
+
+Bootstrapping requires the following steps:
+1) Configure the servers under orchestration in the inventory file at atomika/inventory/atomika_inventory.yml as per one 
+of the topologies described lower down. 
+2) Create a private/public SSH key for the orchestration user. There are many hHowtos that explains how to this, but the 
+command should be somewhat as follows:
+>**ssh-keygen -f ansible -t ecdsa -b 521**
+
+3) The private and public keys for a user called ansible will be ansible and ansible.pub, respectively. Store the private 
+key somewhere safe and replace the file "ansible.pub" in the root of your local Atomika repo.
+4) Run the playbook to create a user called "ansible" with associated public key as discussed higher up:
+>**ansible-playbook --ask-pass   bootstrap/bootstrap.yml -i atomika/atomika_inventory.yml -K**
+
+Note that this play will ask for an account and sudo password.
+
+This [Dzone.com](https://dzone.com/articles/ansible-boots-kubernetes) article also provides an explanation into bootstrapping.
+
+### Single node topology
+It is possible to boot a single node K8S cluster. It may not be best practice, but it can be useful for local testing using 
+the jetpack playbooks that declares fast local deployments of Java maven projects.
+
+The steps to configure are:
+1) configure your topology in the Ansible inventory in atomika/inventory/single_node_inventory.yml, specifically by 
+amending the ip address and location of the private key of the ansible user created during bootstrapping.
+2) Since there is only one node, the master (control-plane) will have to double up as a worker as well. Consequently,
+the taint that prevents pods from being scheduled on the control-plane should be removed after booting:
+>kubectl taint node --all  node-role.kubernetes.io/control-plane:NoSchedule-
+
+
+### Basic topology
+The basic topology consists of one control plane and as many clients/worker nodes as is required:
+
+1) Add the correct amount of worker nodes to the template inventory located at atomika/inventory/basic_inventory.yml
+2) Amend the IP addresses of the control-plane and all worker nodes
+3) Specify the location of the private key of the ansible user
+
+### High Availability topology
+Please study the [DZone.article](https://dzone.com/articles/anatomy-of-a-high-availability-kubernetes-cluster) explaining 
+for an explanation of Atomika and high availability. Subsequently, configure your HA topology in atomika/inventory/ha_atomika_inventory.yml
+by adding all the required nodes and specifying the location of the ansible user's private key.
+
+# TODO delete main/old inventory file
+
+### Raspberry Pi 
+
+### Booting Atomika
+With configuration of the topology ready, all that remains is to boot the Atomik cluster:
+>ansible-playbook atomika/k8s_boot.yml  -i atomika/atomika_inventory.yml
+
+## Admin commands
+Under the atomika/admin folder admin playbooks are stored.
+
+### Resetting kubeadm on all nodes 
+It is possible to reset kubeadmin on each node in the cluster:
+>ansible-playbook atomika/admin/kubeadm_reset.yml -i atomika/atomika_inventory.yml
+
+
+## Declarative deployments of Spring microservices using Maven JIB
+An earlier description on how to declare Continuous Integration and Deployment (CI/CD) from a Java maven project is available
+at [Dzone.com ](https://dzone.com/articles/fast-feature-branch-deployments-of-micro-services).
+
+The details can be viewed in jetpack/deploy.yml, but in short the steps performed on the build server are:
+1) Requesting a GitHub action token - see DZone.com article referenced directly above for more
+2) Creating temporary keys to clone the relevant repositories
+3) Cloning the relevant repositories
+4) Running a full "maven install" to cater for multi-moduled Maven projects
+5) Creating a Docker image using the Maven JIB plugin
+6) Bypassing a Docker repo by pushing the image directly into ContainerD
+7) Running the various K8S commands using kubectl, such as creating the namespace, creating the service and running the 
+pre- and post commands specified in jetpack/vars.yaml
+
+A sample declaration is available at jetpack/vars.yaml.
+
+# TODO sample java ms project
+
+# TODO test sample jetpack/vars.yaml
+
+### Build server
+A new entry in the inventory is required to designate the server that will build and deploy the container to the K8S clients:
+
+```
+builder:
+  hosts:
+    builder1:
+      ansible_connection: ssh
+      ansible_host: "192.168.68.115"
+      ansible_user: ansible
+      ansible_ssh_common_args: "-o ControlMaster=no -o ControlPath=none"
+      ansible_ssh_private_key_file: ./bootstrap/ansible
+```
+
+The IP address and location of the ansible user's private key has to be configured as per usual. Note that only one build
+server is required.
+
+### Declaration
+The various elements of a deployment declaration will be discussed next, each in its own section.
+
+#### Namespaces
+
+Each element of this list will be created as a K8S namespace in the Atomika cluster:
+
+```
+namespaces:
+  - name: hello_ns
+```
+
+#### GitHub Repositories
+
+Each element of this list represents a GitGub repository that will be cloned:
+
+```
+git_repos:
+- name: hello1
+```
+
+#### Pre- and post-commands
+
+Here one specifies shell commands to run before and after the integration and deployment steps of the process:
+
+```
+pre_k8s_cmds:
+- kubectl create -n cc deployment hazelcast --image=hazelcast/hazelcast:latest-snapshot-jdk21 --port=5701
+- kubectl expose -n cc deployment hazelcast
+
+post_k8s_cmds:
+- kubectl -n cc scale deployment hazelcast --replicas 2
+```
+
+#### Ingress declaration
+
+An K8S Ingress can be opened to route Ingress endpoints to that of Spring Controller endpoints under orchestration 
+from K8S services: 
+
+```
+ingress:
+   host: www.demo.io   # Leave on www.demo.io unless you own the domain and it is not referenced in any DNS registry anywhere
+   rules:
+      - service: hello1                # K8S service that Ingresss should route to
+        namespace: env1                # K8S namespace of K8S service
+        ingress_path: /env1/hello      # Endpoint that clients will call    
+        service_path: /                # Endpoint of Spring microservice to map to
+      - service: hello2
+        namespace: env2
+        ingress_path: /env2/hello
+        service_path: /
+```
+
+#### Declaring Spring Microservice deployments
+
+```
+apps:
+- name: hello1                 # Name of the K8S Service
+  git_repo: spinnaker_tryout   # GitHub repository to clone
+  jib_dir: hello_svc           # Use "." for a single module 
+                               # or name of directory containing JIB connfiguration for multi-module maven project TODO   
+  image: s2c/hello_svc         # Name of container image  that JIB will create
+  namespace: env1              # K8S namespace that the micro-services should be added to
+  git_branch: kustomize        # Git branch to checkout
+  replicas: 3                  # Amount of micro-servicesinstances to start
+  application_properties:      # The application.properties of te Spring micro-service
+  application.properties: |
+  my_name: LocalKubeletEnv1
+- name: hello2                 # Declaration of a second microservice to deploy
+  git_repo: spinnaker_tryout
+  jib_dir: hello_svc
+  image: s2c/hello_svc
+  namespace: env2
+  config_map_path:
+  git_branch: kustomize
+  application_properties:
+  application.properties: |
+  my_name: LocalKubeletEnv2
+```
+
+The pom.xml of a micro-service should have a JIB build plugin configured. The "to" tag is not important, since Atomika 
+pushes the image directly into the ContainerD daemon of the build server. However, the "from" tag should be populated 
+with your choses base container image.
+
+More on the maven JIB plugin can be read here: https://github.com/GoogleContainerTools/jib
+
+```
+    <build>
+        <plugins>        
+            <plugin>
+                <groupId>com.google.cloud.tools</groupId>
+                <artifactId>jib-maven-plugin</artifactId>
+                <version>3.1.4</version>
+                <configuration>
+                    <from>
+                        <image>openjdk:17-jdk-slim</image>
+                    </from>
+                    <to>
+                        <image>docker.io/rb/cc-hellor:31</image>
+                    </to>
+                </configuration>
+            </plugin>
+```
 
 ## Guide for the impatient
 1) Edit the inventory file to  
@@ -64,28 +271,54 @@ constellation
 See the [README.md](https://github.com/jrb-s2c-github/atomika/tree/V1) at the time for more.
 
 ### V2
-Version two sees refactored code.
-
-It also became easier to prepare target machines to accept SSH connections from the Ansible controller. A new Ansible 
+Version two sees:
+1) refactored code.
+2) easier preparation of target machines to accept SSH connections from the Ansible controller. A new Ansible 
 playbook that bootstraps the SSH account to the same public key on all nodes was namely added.  
 
 More detail on V2:
-1) [README.md](https://github.com/jrb-s2c-github/atomika/blob/V2/README.md)
-2) [DZone.com article](https://dzone.com/articles/ansible-boots-kubernetes) 
+1) V2 [README.md](https://github.com/jrb-s2c-github/atomika/blob/V2/README.md)
+2) [DZone.com article](https://dzone.com/articles/ansible-boots-kubernetes) that explains how to use Ansible to boot a 
+Kubernetes cluster 
 
 ### V3
+Version three provided support for high availability topologies.
+
+It, furthermore, improved ease of use with the:
+1) Addition of the k8s_boot.yml playbook that ensures all nodes are added to the cluster in the topology
+as declared in the inventory, instead of having to run playbooks for each stage/type separately
+2) Addition of the kubeadm_reset.yml playbook to call "kubeadm reset" on each node in the inventory topology
+
+More detail on V3:
+1) V3 [README.md](https://github.com/jrb-s2c-github/atomika/blob/V3/README.md)
+2) A [Dzone.com](https://dzone.com/articles/anatomy-of-a-high-availability-kubernetes-cluster) article that details a way 
+to establish high availability with a K8S bare-metal cluster such as Atomika.
 
 ### V4
+Version 4 added playbooks that interpret YAML to clone Java projects from GitHub and steer deployment 
+using Maven JIB and ContainerD running on the Atomika cluster. 
+
+More detail on V4:
+1) V3 [README.md](https://github.com/jrb-s2c-github/atomika/blob/V3/README.md)
+2) A [Dzone.com](https://dzone.com/articles/fast-feature-branch-deployments-of-micro-services) explaining how to configure
+the deployments using Maven, JIB and YAML.
 
 ### V5
 1) Improved documentation in README.md
 2) Upped version of K8S
+3) Removed support for cloudinit, since it has been replaced by the more generic bootstrap.yml playbook
+4) Moved location of inventory into its own sub-directory at atomika/inventory
+5) Added sample inventories for single-node, single control-plane and high availability clusters
 
 ## Outstanding
 1) Move to more recent version of Ubuntu
 2) Improve flow of cluster bootup. Currently, common task are firstly done on the control planes then on the workers. It would
 be better to perform all the common task simultaneously.
 3) Remove cloudinit since it has been replaced by bootstrapping 
+
+## Publications in which Atomika features
+1) As host for the Spinnaker CI/CD platform: https://github.com/jrb-s2c-github/spinnaker_tryout
+2) TODO add all the others
 
 ## References 
 Read the first two to gain understanding what the two prompts starting the master boot-up are about. 
