@@ -13,7 +13,7 @@
   - name: Install HAProxy
     become: true
     ansible.builtin.apt:
-      name: haproxy=2.0.31-0ubuntu0.2
+      name: haproxy
       state: present
 
   - name: Replace line in haproxy.cfg1.

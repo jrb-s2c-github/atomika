@@ -19,8 +19,11 @@ Bootstrapping adds the user account to all nodes that the Ansible control node w
 or cluster memberss using SSH. As such it creates a sudo account for the Ansible user and set up the private\public key 
 combination that will be used for authentication as the ansible user.
 
+Do not try to boot high availability out of the box. Rather firs get the single node topology going, followed by a basic
+control plane and one worker. Only then attempt to start up Atomika in high availibity mode.
+
 Bootstrapping requires the following steps:
-1) Configure the servers under orchestration in the inventory file under atomika/inventory/ that matches the topology of 
+1) Configure the server*S* under orchestration in the inventory file under atomika/inventory/ that matches the topology of 
 your choice as described lower down. Also, change the ansible_user field to that of root or a sudo account. This should
 be changed back to ansible once bootstrapping has been finished.
 2) Create a private/public SSH key for the orchestration user. There are many Howtos that explain how to do this, but the 
@@ -43,25 +46,32 @@ the jetpack playbooks that declares fast local deployments of Java maven project
 The steps to configure are:
 1) configure your topology in the Ansible inventory in atomika/inventory/single_node_inventory.yml, specifically by 
 amending the ip address and location of the private key of the ansible user created during bootstrapping.
-2) Since there is only one node, the master (control-plane) will have to double up as a worker as well. Consequently,
+2) Run the boot command given lower down in its own section and enter the user that will issue kubectl commands
+3) Type enter when prompted for IP ranges. The creation of a MetalLb loadbalancer & Ingress combo has to be configured as per the
+example of Atomika in high availability mode.
+4) Ignore the error given by "Load address pool" task that arises from the lack of MetalLb & Ingress combo.
+5) Since there is only one node, the master (control-plane) will have to double up as a worker as well. Consequently,
 the taint that prevents pods from being scheduled on the control-plane should be removed after booting:
-
-# TODO ansible-playbook atomika/k8s_master_init.yml -i atomika/inventory/single_node_inventory.yml -e kubectl_user=atmin ?
-
 >kubectl taint node --all  node-role.kubernetes.io/control-plane:NoSchedule-
 
 
 ### Basic topology
 The basic topology consists of one control plane and as many clients/worker nodes as is required:
 
-1) Add the correct amount of worker nodes to the template inventory located at atomika/inventory/basic_inventory.yml
+1) Add the correct amount of worker/client nodes to the template inventory located at atomika/inventory/basic_inventory.yml
 2) Amend the IP addresses of the control-plane and all worker nodes
 3) Specify the location of the private key of the ansible user
+4) Run the boot command given lower down in its own section and enter the user that will issue kubectl commands
+5) Type enter when prompted for IP ranges. The creation of a MetalLb loadbalancer & Ingress combo has to be configured as per the
+   example of Atomika in high availability mode.
+6) Ignore the error given by "Load address pool" task that arises from the lack of MetalLb & Ingress combo.
 
 ### High Availability topology
 Please study the [DZone.article](https://dzone.com/articles/anatomy-of-a-high-availability-kubernetes-cluster) explaining 
 for an explanation of Atomika and high availability. Subsequently, configure your HA topology in atomika/inventory/ha_atomika_inventory.yml
-by adding all the required nodes and specifying the location of the ansible user's private key.
+by adding all the required nodes and specifying the location of the ansible user's private key for each node.
+
+during bootstrapping leave builder out
 
 # TODO delete main/old inventory file
 
@@ -323,6 +333,12 @@ the deployments using Maven, JIB and YAML.
 2) Improve flow of cluster bootup. Currently, common task are firstly done on the control planes then on the workers. It would
 be better to perform all the common task simultaneously.
 3) Remove cloudinit since it has been replaced by bootstrapping 
+4) Tasks related to MetalLb and Ingress establishment should not be attempted when this has not been configured. Currently, 
+it is attempted and give rise to errors in the boot play.
+5) Documentation on how to open up the Ingress for topologies other than the high availability one. However, nothing prevents
+one from attempting this yourself. Theoretically it should be possible to add an Ingress to any type of Atomika cluster.
+6) Is it possible to do cluster upgrades from Ansible?
+7) Graphical user interface to configure bootstrapping, Atomika topology and Jetpack CI/CD
 
 ## Publications in which Atomika features
 1) As host for the Spinnaker CI/CD platform: https://github.com/jrb-s2c-github/spinnaker_tryout
