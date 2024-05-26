@@ -3,6 +3,8 @@ This projects contains Ansible playbooks that boot a local Kubernetes cluster, e
 availability and opening it up using and Ingress. Additional playbooks allow the declaration of fast deployments of 
 qualifying Spring microservices from GitHub. Such a project should use Maven JIB for integration.
 
+# TODO It has been tested on Ubuntu server v
+
 ## Another description on how to use these Ansible playbooks to boot your own out-of-cloud cluster can be read at https://dzone.com/articles/fast-feature-branch-deployments-of-micro-services and https://dzone.com/articles/safe-clones-with-ansible.
 
 ## Contributing
@@ -14,22 +16,23 @@ The first step is to clone the Atomika project.
 
 ### Bootstrapping
 Bootstrapping adds the user account to all nodes that the Ansible control node will use to orchestrate the target nodes 
-or cluster memberss using SSH. As such it creates an account for the Ansible user and set up the private\public key 
+or cluster memberss using SSH. As such it creates a sudo account for the Ansible user and set up the private\public key 
 combination that will be used for authentication as the ansible user.
 
 Bootstrapping requires the following steps:
-1) Configure the servers under orchestration in the inventory file at atomika/inventory/atomika_inventory.yml as per one 
-of the topologies described lower down. 
-2) Create a private/public SSH key for the orchestration user. There are many hHowtos that explains how to this, but the 
+1) Configure the servers under orchestration in the inventory file under atomika/inventory/ that matches the topology of 
+your choice as described lower down. Also, change the ansible_user field to that of root or a sudo account. This should
+be changed back to ansible once bootstrapping has been finished.
+2) Create a private/public SSH key for the orchestration user. There are many Howtos that explain how to do this, but the 
 command should be somewhat as follows:
 >**ssh-keygen -f ansible -t ecdsa -b 521**
-
 3) The private and public keys for a user called ansible will be ansible and ansible.pub, respectively. Store the private 
 key somewhere safe and replace the file "ansible.pub" in the root of your local Atomika repo.
 4) Run the playbook to create a user called "ansible" with associated public key as discussed higher up:
->**ansible-playbook --ask-pass   bootstrap/bootstrap.yml -i atomika/atomika_inventory.yml -K**
+>**ansible-playbook --ask-pass   bootstrap/bootstrap.yml -i atomika/inventory/*****.yml -K**
 
-Note that this play will ask for an account and sudo password.
+Note that this play will ask for both the account and the sudo password. Should it be a root account the "-K" switch should 
+be removed so the sudo password is not prompted for.
 
 This [Dzone.com](https://dzone.com/articles/ansible-boots-kubernetes) article also provides an explanation into bootstrapping.
 
@@ -42,6 +45,9 @@ The steps to configure are:
 amending the ip address and location of the private key of the ansible user created during bootstrapping.
 2) Since there is only one node, the master (control-plane) will have to double up as a worker as well. Consequently,
 the taint that prevents pods from being scheduled on the control-plane should be removed after booting:
+
+# TODO ansible-playbook atomika/k8s_master_init.yml -i atomika/inventory/single_node_inventory.yml -e kubectl_user=atmin ?
+
 >kubectl taint node --all  node-role.kubernetes.io/control-plane:NoSchedule-
 
 
@@ -63,14 +69,16 @@ by adding all the required nodes and specifying the location of the ansible user
 
 ### Booting Atomika
 With configuration of the topology ready, all that remains is to boot the Atomik cluster:
->ansible-playbook atomika/k8s_boot.yml  -i atomika/atomika_inventory.yml
+>ansible-playbook atomika/k8s_boot.yml  -i atomika/inventory/******.yml
+
+When prompted for, enter the user that will be issuing the kubectl commands. 
 
 ## Admin commands
 Under the atomika/admin folder admin playbooks are stored.
 
 ### Resetting kubeadm on all nodes 
 It is possible to reset kubeadmin on each node in the cluster:
->ansible-playbook atomika/admin/kubeadm_reset.yml -i atomika/atomika_inventory.yml
+>ansible-playbook atomika/admin/kubeadm_reset.yml -i atomika/inventory/*******.yml
 
 
 ## Declarative deployments of Spring microservices using Maven JIB
@@ -85,7 +93,7 @@ The details can be viewed in jetpack/deploy.yml, but in short the steps performe
 5) Creating a Docker image using the Maven JIB plugin
 6) Bypassing a Docker repo by pushing the image directly into ContainerD
 7) Running the various K8S commands using kubectl, such as creating the namespace, creating the service and running the 
-pre- and post commands specified in jetpack/vars.yaml
+pre- and post-commands specified in jetpack/vars.yaml
 
 A sample declaration is available at jetpack/vars.yaml.
 
@@ -327,6 +335,21 @@ Read the first two to gain understanding what the two prompts starting the maste
 3) https://subok-tech.com/installing-kubernetes-using-ansible-on-ubuntu-20-04/
 3) https://phoenixnap.com/kb/how-to-create-sudo-user-on-ubuntu#:~:text=Most%20Linux%20systems%2C%20including%20Ubuntu%2C%20have%20a%20user,terminal%2C%20enter%20the%20command%3A%20usermod%20-aG%20sudo%20newuser
 4) https://multipass.run/docs/launch-command
+
+# Common problems
+
+## Playbook refuse to start due to connection issues
+Ansible uses ssh so try to connect from the Ansible controller to the target service directly using SSH, specifically:
+1) before bootstrapping sign up using the user configured in the inventory to run the bootstrap play from:
+>ansible_user: root
+2) Check that the ansible user set in the inventory is correct
+3) Make sure that you created the public/private keys for a user called ansible
+
+## Ansible tips and tricks
+1) https://zwischenzugs.com/2021/08/27/five-ansible-techniques-i-wish-id-known-earlier/
+2) Use --start-at-task switch to continue from last successfull task after fixing the cause of a failed task, e.g.
+>ansible-playbook atomika/k8s_boot.yml  -i atomika/inventory/single_node_inventory.yml --start-at-task="Initializing Kubernetes Cluster"
+3) Add the "-vvv" switch to the ansible-playbook command for verbose feedback.
 
 
 

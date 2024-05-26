@@ -120,9 +120,9 @@
    become: true
    apt:
      name:
-       - kubeadm={{ k8s_version }}
-       - kubectl={{ k8s_version }}
-       - kubelet={{ k8s_version }}
+       - kubeadm
+       - kubectl
+       - kubelet
      state: present
 
  - name: Enable service kubelet, and enable persistently
