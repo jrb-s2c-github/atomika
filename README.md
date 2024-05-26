@@ -5,6 +5,9 @@ qualifying Spring microservices from GitHub. Such a project should use Maven JIB
 
 # TODO It has been tested on Ubuntu server v
 
+It is not recommended to use Atomika in production environments without further hardening. It is intended as a play or
+development environment.
+
 ## Another description on how to use these Ansible playbooks to boot your own out-of-cloud cluster can be read at https://dzone.com/articles/fast-feature-branch-deployments-of-micro-services and https://dzone.com/articles/safe-clones-with-ansible.
 
 ## Contributing
@@ -12,7 +15,10 @@ Should you wish to contribute or improve, feel free to fork and create a pull re
 to be added as a contributor.
 
 ## Booting an Atomika K8S cluster
-The first step is to clone the Atomika project.
+The first step is to read this [Dzone.com](https://dzone.com/articles/ansible-boots-kubernetes) article very carefully to gain understanding in how to get Ansible up and running
+and to build the necessary background knowledge for what is to follow.
+
+The second step is to clone the Atomika project.
 
 ### Bootstrapping
 Bootstrapping adds the user account to all nodes that the Ansible control node will use to orchestrate the target nodes 

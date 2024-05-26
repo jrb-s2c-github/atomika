@@ -5,7 +5,7 @@
     - name: "metal_lb_range"
       prompt: "Enter the IP range from which the load balancer IP can be assigned?"
       private: no
-      default: 192.168.68.200-192.168.69.210
+      default: 192.168.68.200-192.168.68.210
   tasks:
     - name: Installing Nginx Ingress Controller
       become_user: "{{ ansible_user }}"
