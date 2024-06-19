@@ -67,7 +67,7 @@
 
  - name: Add Docker Repository
    apt_repository:
-     repo: deb [arch=amd64] https://download.docker.com/linux/ubuntu focal stable
+     repo: deb [arch=amd64] https://download.docker.com/linux/ubuntu jammy stable
      #repo: deb [arch=armhf] https://download.docker.com/linux/ubuntu xenial stable
      state: present
      filename: docker
@@ -86,13 +86,25 @@
 #       - containerd
 #     state: present
 
- - name: Configure containerd.
+ - name: Configure containerd - create dir.
    file:
      path: /etc/containerd
      state: directory
 
- - name: Configure containerd.
+ - name: Configure containerd - create toml.
    shell: /usr/bin/containerd config default > /etc/containerd/config.toml
+
+ - name: Configuring containerd to use version 3.9 of pause container
+   ansible.builtin.replace:
+     path: /etc/containerd/config.toml
+     regexp: pause:3.6
+     replace: pause:3.9     
+  
+ - name: Configuring containerd to enable SystemdCgroup
+   ansible.builtin.replace:
+     path: /etc/containerd/config.toml
+     regexp: SystemdCgroup = false
+     replace: SystemdCgroup = true 
 
  - name: Enable containerd service, and start it.
    systemd:
@@ -104,13 +116,13 @@
  - name: Add Google official GPG key
    apt_key:
 #     url: https://packages.cloud.google.com/apt/doc/apt-key.gpg
-     url: https://pkgs.k8s.io/core:/stable:/v1.28/deb/Release.key
+     url: https://pkgs.k8s.io/core:/stable:/v1.30/deb/Release.key
      keyring: /etc/apt/kubernetes-apt-keyring.gpg
      state: present
 
  - name: Add Kubernetes Repository
    apt_repository:
-     repo: deb [signed-by=/etc/apt/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v1.28/deb/ /
+     repo: deb [signed-by=/etc/apt/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v1.30/deb/ /
            #repo: deb http://apt.kubernetes.io/ kubernetes-xenial main
      state: present
      filename: kubernetes
@@ -120,9 +132,9 @@
    become: true
    apt:
      name:
-       - kubeadm
-       - kubectl
-       - kubelet
+       - kubeadm={{ k8s_version }}
+       - kubectl={{ k8s_version }}
+       - kubelet={{ k8s_version }}
      state: present
 
  - name: Enable service kubelet, and enable persistently

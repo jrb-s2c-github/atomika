@@ -11,15 +11,14 @@
       become_user: "{{ ansible_user }}"
       become_method: sudo
       #     become: yes
-      command: kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.0.5/deploy/static/provider/cloud/deploy.yaml
+      command: kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.10.1/deploy/static/provider/cloud/deploy.yaml
       run_once: true
 
-    - name: FIXME
-      become_user: "{{ ansible_user }}"
-      become_method: sudo
-      #     become: yes
-      command: kubectl delete -A ValidatingWebhookConfiguration ingress-nginx-admission
-      run_once: true
+      #- name: FIXME
+      #become_user: "{{ ansible_user }}"
+      #become_method: sudo
+      #command: kubectl delete -A ValidatingWebhookConfiguration ingress-nginx-admission
+      #run_once: true
 
     - name: Install Metallb1.
       become_user: "{{ ansible_user }}"
@@ -31,7 +30,8 @@
       become_user: "{{ ansible_user }}"
       become_method: sudo
       become: yes
-      command: kubectl apply -f https://raw.githubusercontent.com/metallb/metallb/v0.13.11/config/manifests/metallb-native.yaml
+      command: kubectl apply -f https://raw.githubusercontent.com/metallb/metallb/v0.14.5/config/manifests/metallb-native.yaml
+
 
     - name: Prepare L2Advertisement.
       become_user: "{{ ansible_user }}"
