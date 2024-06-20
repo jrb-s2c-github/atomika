@@ -30,7 +30,7 @@
      when: "'workers' not in groups"
      with_items:
        - kubectl taint node --all node-role.kubernetes.io/control-plane:NoSchedule-        
-       - kubectl label nodes ub22aa node.kubernetes.io/exclude-from-external-load-balancers-
+       - kubectl label nodes --all node.kubernetes.io/exclude-from-external-load-balancers-
 
    - name: Create Pod Network & RBAC.
      become_user: "{{ ansible_user }}"
