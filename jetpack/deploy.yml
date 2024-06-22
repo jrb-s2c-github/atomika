@@ -48,7 +48,7 @@
       #      become: true
       changed_when: mvn_out.rc == 0
       loop:
-        "{{ git_repos }}"
+        "{{ mvn_parents }}"
 
     - name: Run JIB builds
       ansible.builtin.command: "mvn clean compile jib:buildTar -Dimage={{ item.name }}:{{ item.namespace }}"

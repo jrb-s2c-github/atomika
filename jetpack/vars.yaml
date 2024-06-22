@@ -30,9 +30,8 @@ apps:
 #        my_name: LocalKubeletEnv1
 
 
-# Leave on www.demo.io unless you own the domain and it is not referenced in any DNS registry anywhere
 ingress:
-  host: www.demo.io
+  host: www.demo.io     # This name should be mapped to the IP address being announced by MetalLB in a DNS server or /etc/hosts
   rules:
     - service: hello1
       namespace: env1
@@ -46,7 +45,7 @@ ingress:
 namespaces:
   - name: hello_ns
 
-git_repos:
+mvn_parents:
   - name: hello1
 
 pre_k8s_cmds:
