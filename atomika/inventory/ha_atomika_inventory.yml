@@ -2,7 +2,7 @@ masters:
   hosts:
     # do not change name away from host1 - there will only ever be one initial master
     host1:
-      ansible_host: "192.168.68.119"
+      ansible_host: "192.168.68.118"
       ansible_connection: ssh
       ansible_user: ansible
       ansible_ssh_common_args: "-o ControlMaster=no -o ControlPath=none"
@@ -12,7 +12,7 @@ proxies:
   hosts:
 #     do not change name away from haproxy - there will only ever be one haproxy
     haproxy:
-      ansible_host: "192.168.68.115"
+      ansible_host: "192.168.68.120"
       ansible_connection: ssh
       ansible_user: ansible
       ansible_ssh_common_args: "-o ControlMaster=no -o ControlPath=none"
@@ -22,30 +22,30 @@ comasters:
   hosts:
     co-master1:
       ansible_connection: ssh
-      ansible_host: "192.168.68.122"
+      ansible_host: "192.168.68.117"
       ansible_user: ansible
       ansible_ssh_common_args: "-o ControlMaster=no -o ControlPath=none"
       ansible_ssh_private_key_file: ./bootstrap/ansible
-    co-master2:
+      #   co-master2
+      #ansible_connection: ssh
+      #ansible_host: "192.168.68.122"
+      #ansible_user: ansible
+      #ansible_ssh_common_args: "-o ControlMaster=no -o ControlPath=none"
+      #ansible_ssh_private_key_file: ./bootstrap/ansible
+workers:
+  hosts:
+    client1:
       ansible_connection: ssh
       ansible_host: "192.168.68.116"
       ansible_user: ansible
       ansible_ssh_common_args: "-o ControlMaster=no -o ControlPath=none"
       ansible_ssh_private_key_file: ./bootstrap/ansible
-workers:
-  hosts:
-    client1:
-      ansible_connection: ssh
-      ansible_host: "192.168.68.122"
-      ansible_user: ansible
-      ansible_ssh_common_args: "-o ControlMaster=no -o ControlPath=none"
-      ansible_ssh_private_key_file: ./bootstrap/ansible
-    client2:
-      ansible_connection: ssh
-      ansible_host: "192.168.68.157"
-      ansible_user: ansible
-      ansible_ssh_common_args: "-o ControlMaster=no -o ControlPath=none"
-      ansible_ssh_private_key_file: ./bootstrap/ansible
+      # client2:
+      #ansible_connection: ssh
+      #ansible_host: "192.168.68.124"
+      #ansible_user: ansible
+      #ansible_ssh_common_args: "-o ControlMaster=no -o ControlPath=none"
+      #ansible_ssh_private_key_file: ./bootstrap/ansible      
       #vmworkers: used for when hyper-v virtual machines with specific virtual switch configuration (default or internal or shared wift but I am not sure.
       #  I tested on separate external ethernet and found it working)
       #  hosts:
@@ -60,7 +60,7 @@ builder:
   hosts:
     builder1:
       ansible_connection: ssh
-      ansible_host: "192.168.68.115"
+      ansible_host: "192.168.68.116"
       ansible_user: ansible
       ansible_ssh_common_args: "-o ControlMaster=no -o ControlPath=none"
       ansible_ssh_private_key_file: ./bootstrap/ansible

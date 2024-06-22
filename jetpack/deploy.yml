@@ -188,7 +188,7 @@
         "{{ apps }}"
 
     - name: Scale relevant deployments
-      ansible.builtin.shell: "kubectl -n cc scale deployment {{ item.name }} --replicas {{ item.replicas }}"
+      ansible.builtin.shell: "kubectl -n {{ item.namespace }} scale deployment {{ item.name }} --replicas {{ item.replicas }}"
       when: item.replicas is defined
       loop:
         "{{ apps }}"

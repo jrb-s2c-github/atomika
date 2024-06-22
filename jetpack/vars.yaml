@@ -44,14 +44,14 @@ ingress:
       service_path: /
 
 namespaces:
-  - name: hello_ns
+  - name: env1
+  - name: env2
 
 git_repos:
-  - name: hello1
+  - name: hello1/hello_svc
 
 pre_k8s_cmds:
-  - kubectl create -n cc deployment hazelcast --image=hazelcast/hazelcast:latest-snapshot-jdk21 --port=5701
-  - kubectl expose -n cc deployment hazelcast
+  - kubectl create ns temp
 
 post_k8s_cmds:
-  - kubectl -n cc scale deployment hazelcast --replicas 2
+  - kubectl delete ns temp
