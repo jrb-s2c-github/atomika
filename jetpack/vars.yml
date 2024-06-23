@@ -1,5 +1,6 @@
 apps:
   - name: hello1
+    github_account: jrb-s2c-github
     git_repo: spinnaker_tryout
     jib_dir: hello_svc
     image: s2c/hello_svc
@@ -10,6 +11,7 @@ apps:
       application.properties: |
         my_name: LocalKubeletEnv1
   - name: hello2
+    github_account: jrb-s2c-github
     git_repo: spinnaker_tryout
     jib_dir: hello_svc
     image: s2c/hello_svc

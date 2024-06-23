@@ -2,7 +2,7 @@
   gather_facts: yes
   connection: ssh
   vars_files:
-    - vars.yaml
+    - vars.yml
   vars_prompt:
     - name: github_token
       prompt: "Enter your github personal access token?"
@@ -23,7 +23,7 @@
         key_title: ansible_key
         github_access_token: "{{ github_token }}"
         clone_dest: "~/{{ item.name }}"
-        github_account_id: jrb-s2c-github
+        github_account_id: "{{ item.github_account }}"
         repo: "{{ item.git_repo }}"
         branch: "{{ item.git_branch }}"
       loop:
@@ -84,7 +84,7 @@
   gather_facts: yes
   connection: ssh
   vars_files:
-    - vars.yaml
+    - vars.yml
 
   tasks:
     - name: Install PIP
