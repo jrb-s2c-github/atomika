@@ -142,11 +142,11 @@
      name: kubelet
      enabled: yes
 
- - name: Reboot all the kubernetes nodes.
-   reboot:
-     post_reboot_delay: 60
-     reboot_timeout: 80
-     connect_timeout: 300
-     test_command: uptime
+# - name: Reboot all the kubernetes nodes.
+#   reboot:
+#     post_reboot_delay: 60
+#     reboot_timeout: 80
+#     connect_timeout: 300
+#     test_command: uptime
 
 
