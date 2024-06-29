@@ -1,18 +1,21 @@
+>>> Work has started on V5_1. Follow progress [here](https://github.com/jrb-s2c-github/atomika/tree/V5_1?tab=readme-ov-file#v5--20240623).  
+
 # Atomika
 Atomika is a collection of Ansible playbooks to boot a bare-metal Kubernetes cluster. It provides support for high 
-availability and opens external access using an Ingress. 
+availability and opens external access using a [Kubernetes Ingress](https://kubernetes.io/docs/concepts/services-networking/ingress/). 
 
 A secondary set of playbooks reads deployment declarations, integrates container images and deploys to Atomika. Maven JIB 
 is used to integrate Docker containers and kubectl used to set up the required Service and Deployment orchestration agents. 
 
 Atomika is intended as a play or development environment. It is not recommended for production use without further hardening. 
 
-Atomika allows for single-node, basics and high availability topologies. Guidance is given lower down how to declare each 
+Atomika allows for single-node, basic and high availability topologies. Guidance is given lower down how to declare each 
 topology. Do not try to boot high availability out of the box. Rather, first get the single node topology going, followed 
 by a basic topology consisting of one control plane and one worker. Only then attempt to start up an Atomika cluster in 
 high availability mode. 
 
-Atomika has been tested on a cluster of Unbuntu 22 machines.
+Atomika has been tested on a cluster of Unbuntu 22 machines running inside Windows. However, it can run on any collection 
+of physical and virtual machines.
 
 ## Dzone.com articles on Atomika
 - [Running Ansible From Windows Using Virtualization](https://dzone.com/articles/running-ansible-from-windows-using-virtualization) 
@@ -29,13 +32,14 @@ drop me a message on linkedin at https://www.linkedin.com/in/janrb/ to be added 
 The first step is to read this [Dzone.com](https://dzone.com/articles/ansible-boots-kubernetes) article very carefully 
 to gain background knowledge and to get Ansible up and running.
 
-The next step is to clone the project.
+The next step is to clone the project, followed by amending template files and feeding them to the relevant Ansible plays 
+as outlined lower down.
 
 ### Bootstrapping
 Bootstrapping adds the same user account to all nodes. The Ansible control node uses this account to connect to the 
 target nodes over SSH. It assigns sudo rights and associates a private\public key pair for authentication.
 
-Bootstrapping comprises the following steps:
+Bootstrapping consists of the following steps:
 1) Configure the node(*s*) in the relevant inventory file under the atomika/inventory/ folder that matches the topology 
 of your choice. Also, change the ansible_user field to that of root or a sudo account on the target machine. *This should 
 be changed back to ansible once bootstrapping has been concluded.*
@@ -53,7 +57,8 @@ Should each machine be accessible by different accounts, you should bootstrap ma
 Note that this play will ask for both the account and the sudo password. Should it be a root account the "-K" switch should 
 be removed so the sudo password is not prompted for.
 
-This [Dzone.com](https://dzone.com/articles/ansible-boots-kubernetes) article also provides an explanation into bootstrapping.
+This [Dzone.com](https://dzone.com/articles/ansible-boots-kubernetes) article also provides a more detailed explanation 
+on bootstrapping.
 
 ### Configure single node topology
 It is possible to boot a single node K8S cluster. It may not be best practice, but it can be useful for local testing using 
@@ -110,7 +115,7 @@ This runs "*kubeadm reset*" on each node in the cluster and *must* be run to tea
 boot up.
 
 ## Jetpack: Declarative deployments of Spring microservices using Maven JIB
-An earlier description on how to declare Continuous Integration and Deployment (CI/CD) for a Spring microservices project 
+A fuller description on how to declare Continuous Integration and Deployment (CI/CD) for a Spring microservices project 
 is available at [Dzone.com ](https://dzone.com/articles/fast-feature-branch-deployments-of-micro-services).
 
 The details can be viewed in jetpack/deploy.yml, but in short the steps performed by the build server are:
@@ -128,7 +133,8 @@ A sample declaration is available at jetpack/vars.yml. It specifies the deployme
 https://github.com/jrb-s2c-github/spinnaker_tryout.
 
 ### Build server
-A new entry is required in the inventory to designate the server that will build and deploy the container to its ContainerD.
+A new entry is required in the inventory to designate the server that will build and deploy the container to its ContainerD
+daemon.
 
 ```
 builder:
@@ -194,7 +200,7 @@ artefacts.
 
 #### Ingress declaration
 
-An K8S Ingress routes endpoints to microservice endpoints exposed inside the cluster: 
+A Kubernetes Ingress routes endpoints to microservice endpoints exposed inside the cluster: 
 
 ```
 ingress:
@@ -224,8 +230,7 @@ apps:
 - name: hello1                   # Name of the K8S Service
   github_account: jrb-s2c-github # GitHub account that contains the repository to clone
   git_repo: spinnaker_tryout     # GitHub repository to clone
-  jib_dir: hello_svc             # Use "." for a single module 
-                                 # or name of directory containing JIB connfiguration for multi-module maven project   
+  jib_dir: hello_svc             # Use "." for a single module or name of directory containing JIB connfiguration for multi-module maven project   
   image: s2c/hello_svc           # Name of container image  that JIB will create
   namespace: env1                # K8S namespace that the micro-services should be added to
   git_branch: kustomize          # Git branch to checkout
@@ -233,7 +238,7 @@ apps:
   application_properties:        # The application.properties of te Spring micro-service
   application.properties: |
   my_name: LocalKubeletEnv1
-- name: hello2                 # Declaration of a second microservice to deploy
+- name: hello2                   # Declaration of a second microservice to deploy
   git_repo: spinnaker_tryout
   jib_dir: hello_svc
   image: s2c/hello_svc
@@ -247,7 +252,7 @@ apps:
 
 The pom.xml of a micro-service should have a JIB build plugin configured. The "to" tag is not important, since Atomika 
 pushes the image directly into the ContainerD daemon of the build server. However, the "from" tag should be populated 
-with the base container image.
+with the base image. JIB adds the code to this base before publishing the new image.
 
 ```
     <build>
@@ -346,6 +351,11 @@ Jetpack to deploy using Maven, JIB, YAML and Kubectl.
 9) Added sample inventories for single-node, single/basic control-plane and high availability clusters 
 10) Added sample input yaml for Jetpack (jetpack/vars.yml)
 
+### V5_1 (Alpha release)
+1) Removed reboot step to ease the booting of Windows clusters on the HyperV default switch
+2) Added PowerShell commands to create an Ubuntu22 VM on Windows HyperV in two steps. See CREATE_VM_FROM_POWERSHELL.md for more.
+3) Improved documentation in general
+
 ## Outstanding
 1) Improve flow of cluster bootup. Currently, common task are firstly done on the control planes then on the workers. It would
 be better to perform all the common task simultaneously. 
@@ -357,12 +367,13 @@ be better to perform all the common task simultaneously.
 7) Add group_vars to hold version info of metallb, ingress-nginx from k8s_ingress_controller.yml, k8s and containerd. Can 
 a BOM be generated from this? 
 8) HAProxy should be able to run on one of the K8S nodes - will it work when it is configured to listen on a different port? 
-9) Add support for other Linux distro's using some sort of templating, starting with the hidden support for ARCH linux used 
-by Raspberry PI's 
+9) Add support for other Linux distro's using some sort of templating, starting with the undocumented ARCH linux/ Raspberry PI's 
 10) Jetpack should not delete namespaces everytime, it should only deploy what has changed 
-11) Is it possible to have no node reboots during boot? This will allow use of HyperV default switch and remove the 
-onerous dedication of a network interface to run Atomika clusters on Windows. HyperV namely reassigns new IP address after
-each boot which results in difficult cluster boots.
+11) Having PowerShell commands to create Ubuntu VM's running inside Windows HyperV is good, but surely the user experience
+can be improved
+12) Find a way to configure Ubuntu from scripts instead of having to do it using mouse clicks. Can CloudInit do this?
+13) Once Ubuntu nodes can be configured from scripts, work on a way to boot a Windows cluster from scratch with one click
+from a GUI.
 
 # Common problems
 
@@ -375,18 +386,19 @@ to establish trust between the servers
 is used in the sample inventories and is therefore recommended way.
 
 ## Ansible tips and tricks
-1) https://zwischenzugs.com/2021/08/27/five-ansible-techniques-i-wish-id-known-earlier/
-2) Use --start-at-task switch to continue from last successful task after fixing the cause of a failed task, e.g.
+* https://zwischenzugs.com/2021/08/27/five-ansible-techniques-i-wish-id-known-earlier/
+* Use --start-at-task switch to continue from last successful task after fixing the cause of a failed task, e.g.
 >ansible-playbook atomika/k8s_boot.yml  -i atomika/inventory/single_node_inventory.yml --start-at-task="Initializing Kubernetes Cluster"
-3) Add the "-vvv" switch to the ansible-playbook command for verbose feedback.
-4) The kubectl commands can be run on any control-plane
+* Combining --start-at-task with --step is for Ansible superusers
+* Add the "-vvv" switch to the ansible-playbook command for verbose feedback.
+* The kubectl commands can be run on any control-plane
 
 ## Other things to keep in mind
 1) Check that server IP's are correct in the inventory
-2) Check that user account is correct during bootstrapping
+2) Check that user account is correct during bootstrapping and that it has been changed to the ansible user after bootstrapping
 2) Run kubeadm_reset.yml to reset clusters after use or upon failure 
 3) Run HAProxy on its own node
 4) Always reset kubeadmin on a K8S node before removing it from the cluster. A common problem is to assign a K8S node as the
-HAProxy host after forgetting to reset it using kubeadm. This can result in port conflicts.
+HAProxy host after forgetting to reset it using kubeadm. This can result in port conflicts between Kubelet and HAProxy.
 5) Builder server should not be a control-plane unless it is a single node cluster. Should apps image fail to deploy 
 (ErrImgPull), this is most likely the reason.

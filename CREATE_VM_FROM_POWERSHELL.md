@@ -8,19 +8,21 @@ Ensure that HyperV has the Default Network Switch, otherwise create it. Virtual 
 assigned internal IP's. It remains an outstanding task to have the same IP assigned after reboots.
 
 One can also create a virtual switch with a dedicated adaptor, e.g. ethernet cable should your PC normally use Wi-Fi. 
-Since the router at the other end of the ethernet cable assigns the IP address this is more stable than the Default Switch.
-The best solution is actually to configure the router to use static IP's. The switch name can be changed in the "New-VM" 
-command below using the -SwitchName setting.
+This might be more stable than the Default Switch since the ip address will be assigned by DHCP. The best solution is 
+actually to configure a static ip address. The switch name can be changed in the "New-VM" command below using the 
+-SwitchName setting.
 
 Run this command to set the location of the Ubuntu22 boot image:
 ```
-Set-Variable VDiskHome C:\Users\skaap\vm_disks\ISO
+Set-Variable VDiskHome C:\Users\janr\vm_disks\ISO
 ```
-Copy, paste and run all the commands below to create in Ubuntu22 VM in one go:
+Copy, paste and run all the commands below to create an Ubuntu22 VM in one go:
 ```
-Set-Variable Name ubuntu22AK
-New-VM -Name $Name -MemoryStartupBytes 4GB -NewVHDPath $Name+'.vhdx' -NewVHDSizeBytes 40GB -SwitchName 'Default Switch' 
+Set-Variable Name ubuntu22AN
+New-VM -Name $Name -MemoryStartupBytes 4GB -NewVHDPath $Name+'.vhdx' -NewVHDSizeBytes 100GB -SwitchName 'Default Switch' 
 Set-VM -Name $Name -ProcessorCount 4 -StaticMemory 
-Add-VMDvdDrive -VMName "$Name" -Path $VDiskHome\ubuntu-22.04.4-live-server-amd64.iso 
+Add-VMDvdDrive -VMName "$Name" -Path $VDiskHome\ubuntu-22.04-autoinstall.iso 
 ```
+More than one enter press might be required until there is a clean prompt again
+
 This sequence of commands should be run for as many nodes as are required in the cluster.
