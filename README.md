@@ -1,3 +1,5 @@
+>>> Work has started on V5_1. Follow progress [here](https://github.com/jrb-s2c-github/atomika/tree/V5_1?tab=readme-ov-file#v5--20240623).
+
 # Atomika
 Atomika is a collection of Ansible playbooks to boot a bare-metal Kubernetes cluster. It provides support for high 
 availability and opens external access using an Ingress. 
