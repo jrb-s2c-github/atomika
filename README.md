@@ -353,8 +353,13 @@ Jetpack to deploy using Maven, JIB, YAML and Kubectl.
 
 ### V5_1 (Alpha release)
 1) Removed reboot step to ease the booting of Windows clusters on the HyperV default switch
-2) Added PowerShell commands to create an Ubuntu22 VM on Windows HyperV in two steps. See CREATE_VM_FROM_POWERSHELL.md for more.
-3) Improved documentation in general
+2) A separate project was created at [jrb-s2c-github/atomika_wormhole](https://github.com/jrb-s2c-github/atomika_wormhole)
+that a) will prepare machines for use as Ansible control Kubernetes nodes and b) allow such machines to boot as Window VM's 
+without requiring human interaction with HyperV. The presence of customized Ubuntu boot images for download mandates a 
+separated project to prevent Atomika cloning from taking too long.  
+3) Added default ssh keys that will be baked into the atomika_wormhole boot image. The onus will be on the user to replace
+this keypair after first use should the security requirements warrant it.
+4) Improved documentation in general
 
 ## Outstanding
 1) Improve flow of cluster bootup. Currently, common task are firstly done on the control planes then on the workers. It would
@@ -368,12 +373,11 @@ be better to perform all the common task simultaneously.
 a BOM be generated from this? 
 8) HAProxy should be able to run on one of the K8S nodes - will it work when it is configured to listen on a different port? 
 9) Add support for other Linux distro's using some sort of templating, starting with the undocumented ARCH linux/ Raspberry PI's 
-10) Jetpack should not delete namespaces everytime, it should only deploy what has changed 
-11) Having PowerShell commands to create Ubuntu VM's running inside Windows HyperV is good, but surely the user experience
-can be improved
-12) Find a way to configure Ubuntu from scripts instead of having to do it using mouse clicks. Can CloudInit do this?
-13) Once Ubuntu nodes can be configured from scripts, work on a way to boot a Windows cluster from scratch with one click
-from a GUI.
+10) Jetpack should not delete namespaces everytime, it should only deploy what has changed
+11) Find a way to configure Ubuntu from scripts instead of having to do it using mouse clicks. Can CloudInit do this?
+12) Once Ubuntu nodes can be configured from scripts, work on a way to boot a Windows cluster from scratch with one click
+from a GUI. 
+13) Switch of password signin for atomika-portal
 
 # Common problems
 
