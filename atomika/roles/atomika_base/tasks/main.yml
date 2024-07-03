@@ -75,7 +75,6 @@
 
  - name: Install containerd
    apt:
-     allow_downgrade: true
      name:
        - containerd.io={{ containerd_version }}
      state: present

@@ -1,0 +1,13 @@
+# k8s_master_init.yml
+
+- hosts: masters, comasters, workers
+  become: yes
+  become_method: sudo
+  become_user: root
+  gather_facts: yes
+  connection: ssh
+  roles:
+    - atomika_base
+
+...
+
