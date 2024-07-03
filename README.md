@@ -1,6 +1,30 @@
 >>> Work has started on V5_1. Follow progress [here](https://github.com/jrb-s2c-github/atomika/tree/V5_1?tab=readme-ov-file#v5--20240623).  
 
 # Atomika
+```
+ ATOMIKA: Local deployments to Kubernetes
+          
+                    .   .xXXXX+.   .
+               .   ..   xXXXX+.-   ..   .   
+         .   ..  ... ..xXXXX+. --.. ...  ..   .
+     .   ..  ... .....xXXXX+.  -.-..... ...  ..   .
+   .   ..  ... ......xXXXX+.  . .--...... ...  ..   . 
+  .   ..  ... ......xXXXX+.    -.- -...... ...  ..   .
+ .   ..  ... ......xXXXX+.   .-+-.-.-...... ...  ..   .
+ .   ..  ... .....xXXXX+. . --xx+.-.--..... ...  ..   .
+.   ..  ... .....xXXXX+. - .-xxxx+- .-- .... ...  ..   .
+ .   ..  ... ...xXXXX+.  -.-xxxxxx+ .---... ...  ..   .
+ .   ..  ... ..xXXXX+. .---..xxxxxx+-..--.. ...  ..   .
+  .   ..  ... xXXXX+. . --....xxxxxx+  -.- ...  ..   .
+   .   ..  ..xXXXX+. . .-......xxxxxx+-. --..  ..   .
+     .   .. xXXXXXXXXXXXXXXXXXXXxxxxxx+. .-- ..   .
+         . xXXXXXXXXXXXXXXXXXXXXXxxxxxx+.  -- .
+           xxxxxxxxxxxxxxxxxxxxxxxxxxxxx+.--
+            xxxxxxxxxxxxxxxxxxxxxxxxxxxxx+-   Ojosh!ro
+            
+  MIT License, Copyright (c) 2024 S2C Consulting (PtyLtd ZA)
+```
+
 Atomika is a collection of Ansible playbooks to boot a bare-metal Kubernetes cluster. It provides support for high 
 availability and opens external access using a [Kubernetes Ingress](https://kubernetes.io/docs/concepts/services-networking/ingress/). 
 
@@ -60,6 +84,8 @@ be removed so the sudo password is not prompted for.
 This [Dzone.com](https://dzone.com/articles/ansible-boots-kubernetes) article also provides a more detailed explanation 
 on bootstrapping.
 
+# TODO run k8s_init.yml only once
+
 ### Configure single node topology
 It is possible to boot a single node K8S cluster. It may not be best practice, but it can be useful for local testing using 
 the Jetpack playbooks for fast local deployments.
@@ -97,7 +123,13 @@ In short the steps are:
 1) Configure the correct topology under atomika/inventory as explained higher up. Ensure that the ip address and location of 
 the private key of the ansible user created during bootstrapping are correct for every target node referenced in the inventory. 
 2) Boot the Atomika cluster:
->ansible-playbook atomika/k8s_boot.yml  -i atomika/inventory/******.yml
+>ansible-playbook -i atomika/inventory/ha_atomika_inventory.yml atomika/k8s_boot.yml -K -e metal_lb_range=172.26.64.3-172.26.64.200
+#### TODO explain switch for secondary/kubectl_temp user - disabled in command above ==> remove to tips and tricks how to create second user with second_kubectl_user switch
+#### TODO description of how to establish metallb range:
+ip route
+https://serverfault.com/questions/1143158/metallb-ip-address-is-not-accessible-when-trying-to-connect-from-host-machine-h/1162349#1162349
+https://learn.microsoft.com/en-us/windows-server/networking/sdn/technologies/hyper-v-network-virtualization/hyperv-network-virtualization-technical-details-windows-server
+
 
 When prompted for:
 * Enter the user that will be issuing the kubectl commands 
@@ -286,10 +318,14 @@ repositories regardless whether it is private or not. This classic access token 
 *repo, admin:public_key, user, and admin:gpg_key*. 
 
 ## Testing Ingress and MetalLB LoadBalancer 
+This is performed at the end of the boot, but are documented here for the sake completion.
+
 1) Run 'kubectl get service ingress-nginx-controller --namespace=ingress-nginx' and check that an IP address has been assigned to field "EXTERNAL-IP". This means MetalLB is listening on this IP address.
 2) Run 'kubectl create deployment demo --image=httpd --port=80' to install web server
 3) Run 'kubectl expose deployment demo' to expose web server as service
 4) Run 'kubectl create ingress demo --class=nginx --rule www.demo.io/=demo:80' to create Ingress resource
+5) Determine external IP of Ingress (kubectl -n ingress-nginx get svc ingress-nginx-controller) and add a DNS mapping to 
+it in the hosts (/etc/hosts or C:\Windows\System32\drivers\etc\hosts) file
 5) Open www.demo.io inside a web browser or on any node in the cluster and check that "It works!" is displayed
 
 See https://kubernetes.github.io/ingress-nginx/deploy/#quick-start for more
@@ -350,6 +386,8 @@ Jetpack to deploy using Maven, JIB, YAML and Kubectl.
 8) Removed taints and labels to have Ingress work on single-node clusters as well 
 9) Added sample inventories for single-node, single/basic control-plane and high availability clusters 
 10) Added sample input yaml for Jetpack (jetpack/vars.yml)
+11) Moved kubectl commands from ansible commands to the ansible kubernetes galaxy collection
+12) Refactored ansible code
 
 ### V5_1 (Alpha release)
 1) Removed reboot step to ease the booting of Windows clusters on the HyperV default switch
@@ -360,6 +398,7 @@ separated project to prevent Atomika cloning from taking too long.
 3) Added default ssh keys that will be baked into the atomika_wormhole boot image. The onus will be on the user to replace
 this keypair after first use should the security requirements warrant it.
 4) Improved documentation in general
+5) Added option to only have the bootstrapped ansible account
 
 ## Outstanding
 1) Improve flow of cluster bootup. Currently, common task are firstly done on the control planes then on the workers. It would
@@ -370,14 +409,18 @@ be better to perform all the common task simultaneously.
 5) Should it be possible to skip "mvn install" step? The JIB command is sufficient for single module projects.
 6) Split atomika_base role out as it should only run once to prepare a target node for orchestration 
 7) Add group_vars to hold version info of metallb, ingress-nginx from k8s_ingress_controller.yml, k8s and containerd. Can 
-a BOM be generated from this? 
-8) HAProxy should be able to run on one of the K8S nodes - will it work when it is configured to listen on a different port? 
-9) Add support for other Linux distro's using some sort of templating, starting with the undocumented ARCH linux/ Raspberry PI's 
-10) Jetpack should not delete namespaces everytime, it should only deploy what has changed
-11) Find a way to configure Ubuntu from scripts instead of having to do it using mouse clicks. Can CloudInit do this?
-12) Once Ubuntu nodes can be configured from scripts, work on a way to boot a Windows cluster from scratch with one click
+a BOM be generated from this?  
+8Add support for other Linux distro's using some sort of templating, starting with the undocumented ARCH linux/ Raspberry PI's 
+9) Jetpack should not delete namespaces everytime, it should only deploy what has changed 
+10) Find a way to configure Ubuntu from scripts instead of having to do it using mouse clicks. Can CloudInit do this? 
+11) Once Ubuntu nodes can be configured from scripts, work on a way to boot a Windows cluster from scratch with one click
 from a GUI. 
-13) Switch of password signin for atomika-portal
+12) Testing harness 
+13) Run docker registry on one node so all images can be pulled from there by the other nodes in the cluster
+14) DNS server to register name of Ingress to remove need to mess with hosts files
+15) Integration with ansible lint on some level
+16) Defaulting metallb range to something on the gateway's local subnet 
+17) Checking whether things can be sped up by not gathering facts every time?
 
 # Common problems
 
@@ -388,14 +431,22 @@ to establish trust between the servers
 2) Check that the ansible user set in the inventory is correct
 3) Make sure that you created the public/private keys for the user configured for each node in the inventory. Ansible user 
 is used in the sample inventories and is therefore recommended way.
+4) Should there be a workers group even thought it is empty the taints preventing scheduling on masters will not be removed
+and the cluster will never stabilize.
 
-## Ansible tips and tricks
+## Tips and tricks
 * https://zwischenzugs.com/2021/08/27/five-ansible-techniques-i-wish-id-known-earlier/
-* Use --start-at-task switch to continue from last successful task after fixing the cause of a failed task, e.g.
->ansible-playbook atomika/k8s_boot.yml  -i atomika/inventory/single_node_inventory.yml --start-at-task="Initializing Kubernetes Cluster"
+* Use --start-at-task switch to continue from last successful task after fixing the cause of a failed task:
+*ansible-playbook atomika/k8s_boot.yml  -i atomika/inventory/single_node_inventory.yml --start-at-task="Initializing Kubernetes Cluster"*
 * Combining --start-at-task with --step is for Ansible superusers
 * Add the "-vvv" switch to the ansible-playbook command for verbose feedback.
 * The kubectl commands can be run on any control-plane
+* Error: "dr: \\\"cni0\\\" already has an IP address different from" ==> run *"ip link delete cni0 && ip link delete flannel.1"*
+* On the master node the cluster can be interrogated on the master: *"sudo kubectl --kubeconfig /etc/kubernetes/admin.conf get nodes"*
+This is especially useful in the time between cluster initialization and the copying of the kubeconfig from this location to 
+the home directory of the ansible user.
+* Command completion of kubectl will be enabled. Should it not work, install bash completion using *sudo apt install bash-completion*
+followed by signing out and back in again. This is not required when booting from a wormhole image.
 
 ## Other things to keep in mind
 1) Check that server IP's are correct in the inventory

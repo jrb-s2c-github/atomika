@@ -1,0 +1,63 @@
+# repeater.yml
+
+- block:
+    - when: init_count | default(true)
+      ansible.builtin.set_fact:
+        retry_count: 0
+
+    - debug:
+        msg: 'Current number is {{ number }}, and current retry count is {{ retry_count }}'
+
+    - name: Attept to boot Atomika
+      ansible.builtin.include_tasks: k8s_boot.yml
+
+  # Do an action, use the result to do another action or checks (for example a wget, curl, or another request to get an ID)
+  # For the simplicity of the example, I simply do an echo
+#    - name: API - get ID
+#      ansible.builtin.shell: 'echo {{ number }}'
+#      register: _api_result
+
+  # Use the result from the precedent task
+#    - name: Use the ID to check another API if process is successful
+  ## An exemple of a use case, using the id
+  # ansible.builtin.uri:
+  #   url: 'https://example.com/status?id={{ _api_result.stdout }}'
+  #   method: GET
+  #   status_code: 200
+  # register: _check_status
+  # until:
+  #   - _check_status.json is defined
+  #   - _check_status.json.status in ["SUCCESSFUL", "COMPLETED", "FAILURE"]
+  # failed_when: _check_status.json is not defined or _check_status.json.status in ["FAILURE"]
+  # delay: '5'
+  # retries: '3'
+
+  ## For the simplicity, I just used a failed_when on debug
+#      debug:
+#        msg: 'Testing that api result is a > 3'
+#      failed_when: _api_result.stdout|int > 3
+
+  rescue:
+    - when: _check_status.json is defined and _check_status.json.status in ["FAILURE"]
+      name: Fail if process return Failure
+      ansible.builtin.fail:
+        msg: status failure
+
+    - name: Fail Task in case of total failure after a certain amount of retry
+      ansible.builtin.fail:
+        msg: "5 retries attempted, failed perform desired result"
+      when: retry_count | int >= 5
+
+  # Pause the playbook if necessary.
+  # - ansible.builtin.pause:
+  #     seconds: '5'
+
+    - name: Increment Retry Count
+      ansible.builtin.set_fact:
+        retry_count: "{{ retry_count | int + 1 }}"
+
+  # Retry the function.yml and indicate to increment the counter.
+    - name: Retry function
+      ansible.builtin.include_tasks: repeater.yml
+      vars:
+        init_count: false
