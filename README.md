@@ -1,6 +1,37 @@
 >>> Work has started on V5_1. Follow progress [here](https://github.com/jrb-s2c-github/atomika/tree/V5_1?tab=readme-ov-file#v5--20240623).  
 
 # Atomika
+```
+                       ______
+                      /\     \
+                     /  \     \
+                    /    \_____\
+                   _\    / ____/_
+                  /\ \  / /\     \
+                 /  \ \/_/  \     \
+                /    \__/    \_____\
+               _\    /  \    / ____/_
+              /\ \  /    \  / /\     \
+             /  \ \/_____/\/_/  \     \
+            /    \_____\    /    \_____\
+           _\    /     /    \    / ____/_
+          /\ \  /     /      \  / /\     \
+         /  \ \/_____/        \/_/  \     \
+        /    \_____\            /    \_____\
+       _\    /     /            \    / ____/_
+      /\ \  /     /              \  / /\     \
+     /  \ \/_____/                \/_/  \     \ -axiac
+    /    \_____\                    /    \_____\
+    \    /     /_  ______  ______  _\____/ ____/_
+    /\ \  /     /  \/\     \/\     \/\     \/\     \
+   /  \ \/_____/    \ \     \ \     \ \     \ \     \
+  /    \_____\ \_____\ \_____\ \_____\ \_____\ \_____\
+  \    /     / /     / /     / /     / /     / /     /
+   \  /     / /     / /     / /     / /     / /     /
+    \/_____/\/_____/\/_____/\/_____/\/_____/\/_____/
+   MIT License, Copyright (c) 2021 S2C Consulting (PtyLtd ZA)
+```
+
 Atomika is a collection of Ansible playbooks to boot a bare-metal Kubernetes cluster. It provides support for high 
 availability and opens external access using a [Kubernetes Ingress](https://kubernetes.io/docs/concepts/services-networking/ingress/). 
 
