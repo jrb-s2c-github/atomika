@@ -7,8 +7,6 @@
       private: no
       default: 192.168.68.200-192.168.68.210
   tasks:
-    - pause: seconds=30
-
     - name: Installing Nginx Ingress Controller
       become_user: "{{ ansible_user }}"
       become_method: sudo
@@ -16,6 +14,7 @@
       command: kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.10.1/deploy/static/provider/cloud/deploy.yaml
       run_once: true
 
+    - pause: seconds=30
       #- name: FIXME
       #become_user: "{{ ansible_user }}"
       #become_method: sudo
