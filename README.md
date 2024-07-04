@@ -287,7 +287,8 @@ repositories regardless whether it is private or not. This classic access token 
 2) Run 'kubectl create deployment demo --image=httpd --port=80' to install web server
 3) Run 'kubectl expose deployment demo' to expose web server as service
 4) Run 'kubectl create ingress demo --class=nginx --rule www.demo.io/=demo:80' to create Ingress resource
-5) Open www.demo.io inside a web browser or on any node in the cluster and check that "It works!" is displayed
+5) Determine external IP of Ingress (kubectl -n ingress-nginx get svc ingress-nginx-controller) and add a DNS mapping to it in the hosts (/etc/hosts or C:\Windows\System32\drivers\etc\hosts) file
+6) Open www.demo.io inside a web browser or on any node in the cluster and check that "It works!" is displayed
 
 See https://kubernetes.github.io/ingress-nginx/deploy/#quick-start for more
 
@@ -376,7 +377,7 @@ to establish trust between the servers
 3) Make sure that you created the public/private keys for the user configured for each node in the inventory. Ansible user 
 is used in the sample inventories and is therefore recommended way.
 
-## Ansible tips and tricks
+## Tips and Tricks
 1) https://zwischenzugs.com/2021/08/27/five-ansible-techniques-i-wish-id-known-earlier/
 2) Use --start-at-task switch to continue from last successful task after fixing the cause of a failed task, e.g.
 >ansible-playbook atomika/k8s_boot.yml  -i atomika/inventory/single_node_inventory.yml --start-at-task="Initializing Kubernetes Cluster"
