@@ -321,6 +321,8 @@ repositories regardless whether it is private or not. This classic access token 
 2) Run 'kubectl create deployment demo --image=httpd --port=80' to install web server
 3) Run 'kubectl expose deployment demo' to expose web server as service
 4) Run 'kubectl create ingress demo --class=nginx --rule www.demo.io/=demo:80' to create Ingress resource
+5) Determine external IP of Ingress (kubectl -n ingress-nginx get svc ingress-nginx-controller) and add a DNS mapping to 
+it in the hosts (/etc/hosts or C:\Windows\System32\drivers\etc\hosts) file
 5) Open www.demo.io inside a web browser or on any node in the cluster and check that "It works!" is displayed
 
 See https://kubernetes.github.io/ingress-nginx/deploy/#quick-start for more
