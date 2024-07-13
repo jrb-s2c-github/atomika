@@ -22,7 +22,7 @@
            xxxxxxxxxxxxxxxxxxxxxxxxxxxxx+.--
             xxxxxxxxxxxxxxxxxxxxxxxxxxxxx+-   Ojosh!ro
             
-  MIT License, Copyright (c) 2024 S2C Consulting (PtyLtd ZA)
+  MIT License, Copyright (c) 2021 S2C Consulting (PtyLtd ZA)
 ```
 
 Atomika is a collection of Ansible playbooks to boot a bare-metal Kubernetes cluster. It provides support for high 
