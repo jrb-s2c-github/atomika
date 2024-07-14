@@ -1,0 +1,77 @@
+# dopy_kube_config.yml
+
+- hosts: masters, comasters
+  #  become: yes
+  connection: ssh
+  tasks:
+  - name: Create directory for kube config of {{ ansible_user }}.
+    become: yes
+    file:
+      path: /home/{{ ansible_user }}/.kube
+      state: directory
+      owner: "{{ ansible_user }}"
+      group: "{{ ansible_user }}"
+      mode: 0755
+
+  - name: Copy /etc/kubernetes/admin.conf to user home directory /home/{{ ansible_user }}/.kube/config.
+    become: yes
+    copy:
+      src: /etc/kubernetes/admin.conf
+      dest: /home/{{ ansible_user }}/.kube/config
+      remote_src: yes
+      owner: "{{ ansible_user }}"
+      group: "{{ ansible_user }}"
+      mode: '0640'
+
+  - name: Remove the cache directory.
+    file:
+      path: /home/{{ ansible_user }}/.kube/cache
+      state: absent
+
+  - name: Configure kubectl command auto-completion for {{ ansible_user }}.
+    lineinfile:
+      dest: /home/{{ ansible_user }}/.bashrc
+      line: 'source <(kubectl completion bash)'
+      insertafter: EOF
+
+  - name: Adding secondary user that can access other than the bootstrapped ansible user
+    block:
+      - name: Create directory for kube config of secondary user.
+        become: yes
+        file:
+          path: /home/{{ second_kubectl_user }}/.kube
+          state: directory
+          owner: "{{ second_kubectl_user }}"
+          group: "{{ second_kubectl_user }}"
+          mode: 0755
+
+      - name: Copy /etc/kubernetes/admin.conf to secondary user home directory.
+        become: yes
+        copy:
+          src: /etc/kubernetes/admin.conf
+          dest: /home/{{ second_kubectl_user }}/.kube/config
+          remote_src: yes
+          owner: "{{ second_kubectl_user }}"
+          group: "{{ second_kubectl_user }}"
+          mode: '0640'
+  #
+  #    - name: Remove the cache directory for secondary user.
+  #      file:
+  #        path: /home/{{ second_kubectl_user }}/.kube/cache
+  #        state: absent
+
+  #    - name: Ensuring .bashrc exists for secondary user.
+  #      become: true
+  #      ansible.builtin.file:
+  #        path: /home/{{ second_kubectl_user }}/.bashrc
+  #        state: touch
+  #        mode: '0640'
+
+      - name: Configure kubectl command auto-completion for secondary user.
+        become: true
+        lineinfile:
+          dest: /home/{{ second_kubectl_user }}/.bashrc
+          line: 'source <(kubectl completion bash)'
+          insertafter: EOF
+    when: second_kubectl_user is defined
+#  - pause: seconds=10

@@ -1,0 +1,19 @@
+- name: Loop examples
+  hosts: localhost
+  connection: local
+  gather_facts: False
+  tasks:
+
+    - set_fact:
+        numbers: [1,2,3,4,5]
+
+    - set_fact:
+        continue_task: true
+
+
+    - name: Example of a complex loop. Loop on number, do function(number) until suceed, or fail at the fifth attempt
+      ansible.builtin.include_tasks:
+        file: repeater.yml
+      loop: '{{ numbers }}'
+      loop_control:
+        loop_var: number

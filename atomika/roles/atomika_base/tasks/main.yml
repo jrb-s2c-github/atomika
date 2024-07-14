@@ -74,12 +74,20 @@
      update_cache: yes
 
  - name: Install containerd
-   apt:
-     allow_downgrade: true
-     name:
-       - containerd.io={{ containerd_version }}
-     state: present
-#
+   block:
+     - name: Install containerd not allowing downgrade
+       apt:
+         name:
+           - containerd.io={{ containerd_version }}
+         state: present
+   rescue:
+     - name: Retry to install containerd allowing downgrade
+       apt:
+         allow_downgrade: true
+         name:
+           - containerd.io={{ containerd_version }}
+         state: present
+  #
 # - name: Install containerd.
 #   apt:
 #     name:

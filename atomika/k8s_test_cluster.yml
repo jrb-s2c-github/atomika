@@ -1,0 +1,49 @@
+# k8s_test_cluster.yml
+
+- hosts: masters
+  connection: ssh
+
+  tasks:
+    - name: Create test namespaces
+      remote_user: ansible
+      kubernetes.core.k8s:
+        name: test
+        api_version: v1
+        kind: Namespace
+        state: present
+
+    - name: Create demo web app
+      command: kubectl -n test create deployment demo --image=httpd --port=80
+
+    - name: Expose demo deployment
+      command: kubectl -n test expose deployment demo
+
+    - name: Expose demo deployment
+      command: kubectl -n test create ingress demo --class=nginx --rule www.demo.io/=demo:80
+
+    - name: Get details on the Ingress Controller service
+      kubernetes.core.k8s_info:
+        #        api_version: v1
+        kind: Service
+        name: ingress-nginx-controller
+        namespace: ingress-nginx
+      register: ingress_nginx_svc_register
+
+    - name: Add www.demo.io to /etc/hosts
+      become: true
+      ansible.builtin.lineinfile:
+        dest: /etc/hosts
+        insertbefore: EOF
+        search_string: www.demo.io
+        line: "{{ ingress_nginx_svc_register.resources[0]['status']['loadBalancer']['ingress'][0]['ip']}} www.demo.io"
+
+    - name: Test readiness
+      ansible.builtin.uri:
+        url: http://www.demo.io
+      register: result
+      until: result.status == 200
+      retries: 36
+      delay: 10
+
+...
+

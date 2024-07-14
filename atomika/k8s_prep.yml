@@ -1,0 +1,45 @@
+# k8s_prep.yml
+
+- hosts: masters, comasters, workers
+  become: yes
+  become_method: sudo
+  become_user: root
+  gather_facts: yes
+  connection: ssh
+  vars:
+    master_names: "{{ query('inventory_hostnames', 'masters') }}"
+    hap_names: "{{ query('inventory_hostnames', 'proxies') }}"
+
+  tasks:
+    - name: Set main control-plane as entry endpoint
+      ansible.builtin.set_fact:
+        cp_hap_endpoint: "{{ hostvars[ item ]['ansible_host'] }}"
+      loop: "{{ master_names }}"
+
+    - name: Rather set ha_proxy as entry endpoint should there be one
+      ansible.builtin.set_fact:
+        cp_hap_endpoint: "{{ hostvars[ item ]['ansible_host'] }}"
+      loop: "{{ hap_names }}"
+
+    - name: Add entry for k8scp / entry endpoint to hosts file.
+      lineinfile:
+        dest: /etc/hosts
+        insertbefore: EOF
+        regexp: 'k8scp'
+        line: "{{ cp_hap_endpoint }} k8scp"
+
+    - name: Set hostname to that in inventory
+      ansible.builtin.hostname:
+        name: "{{ inventory_hostname }}"
+
+    - name: Reset kubeadm and ignoring errors as it might be first execution
+      become: yes
+      shell: yes | kubeadm reset
+      ignore_errors: True  # kubeadm not installed at first run
+
+    - name: Reset CNI and ignoring errors as it might be first execution
+      become: yes
+      shell: ip link delete cni0 && ip link delete flannel.1
+      ignore_errors: True  # flannel not installed at first run
+...
+

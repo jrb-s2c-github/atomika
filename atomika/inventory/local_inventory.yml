@@ -2,7 +2,7 @@ masters:
   hosts:
     # do not change name away from host1 - there will only ever be one initial master
     host1:
-      ansible_host: "127.0.0.1"
+      ansible_host: "127.0.1.1"
       ansible_connection: local
       ansible_user: ansible
       ansible_ssh_common_args: "-o ControlMaster=no -o ControlPath=none"

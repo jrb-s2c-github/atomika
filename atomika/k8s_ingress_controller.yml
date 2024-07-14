@@ -1,5 +1,6 @@
+# k8s_ingress_controller.yml
+
 - hosts: masters
-  gather_facts: yes
   connection: ssh
   vars_prompt:
     - name: "metal_lb_range"
@@ -7,12 +8,39 @@
       private: no
       default: 192.168.68.200-192.168.68.210
   tasks:
-    - name: Installing Nginx Ingress Controller
+    - name: Download ingress-nginx manifest to the cluster.
+      ansible.builtin.get_url:
+        url: https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.10.1/deploy/static/provider/cloud/deploy.yaml
+        dest: ~/ingress-nginx.yaml
+        mode: '0664'
+
+    - name: Apply ingress-nginx manifest to the cluster.
+      kubernetes.core.k8s:
+        state: present
+        src: ~/ingress-nginx.yaml
+#    - name: Installing Nginx Ingress Controller
+#      become_user: "{{ ansible_user }}"
+#      become_method: sudo
+#      #     become: yes
+#      command: kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.10.1/deploy/static/provider/cloud/deploy.yaml
+#      run_once: true
+
+    - name: FIXME
       become_user: "{{ ansible_user }}"
       become_method: sudo
-      #     become: yes
-      command: kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.10.1/deploy/static/provider/cloud/deploy.yaml
+      command: kubectl delete -A ValidatingWebhookConfiguration ingress-nginx-admission
       run_once: true
+
+#    - name: Wait till all pods are running
+#      kubernetes.core.k8s_info:
+#        kind: Pod
+#        wait: yes
+#        name: ingress-nginx-controller
+#        namespace: ingress-nginx
+#        wait_sleep: 3
+#        wait_timeout: 360
+#        wait_condition:
+#          type: Running
 
     - pause: seconds=30
       #- name: FIXME
@@ -21,18 +49,40 @@
       #command: kubectl delete -A ValidatingWebhookConfiguration ingress-nginx-admission
       #run_once: true
 
-    - name: Install Metallb1.
-      become_user: "{{ ansible_user }}"
-      become_method: sudo
-      become: yes
-      shell: 'kubectl -n kube-system get configmap kube-proxy -o yaml > /home/{{ ansible_user }}/kube-proxy.yml'
+#    - pause: seconds=30
 
-    - name: Install Metallb2.
-      become_user: "{{ ansible_user }}"
-      become_method: sudo
-      become: yes
-      command: kubectl apply -f https://raw.githubusercontent.com/metallb/metallb/v0.14.5/config/manifests/metallb-native.yaml
+#    - name: Install Metallb1.
+#      become_user: "{{ ansible_user }}"
+#      become_method: sudo
+#      become: yes
+#      shell: 'kubectl -n kube-system get configmap kube-proxy -o yaml > /home/{{ ansible_user }}/kube-proxy.yml'
 
+    - name: Download metallb manifest to the cluster.
+      ansible.builtin.get_url:
+        url: https://raw.githubusercontent.com/metallb/metallb/v0.14.5/config/manifests/metallb-native.yaml
+        dest: ~/metallb.yaml
+        mode: '0664'
+
+    - name: Apply metallb manifest to the cluster.
+      kubernetes.core.k8s:
+        state: present
+        src: ~/metallb.yaml
+#
+#    - name: Install Metallb2.
+#      become_user: "{{ ansible_user }}"
+#      become_method: sudo
+#      become: yes
+#      command: kubectl apply -f https://raw.githubusercontent.com/metallb/metallb/v0.14.5/config/manifests/metallb-native.yaml
+
+    - name: Wait till all pods are running
+      kubernetes.core.k8s_info:
+        kind: Pod
+        wait: yes
+        namespace: metallb-system
+        wait_sleep: 3
+        wait_timeout: 30
+        wait_condition:
+          type: Ready
 
     - name: Prepare L2Advertisement.
       become_user: "{{ ansible_user }}"
@@ -61,16 +111,31 @@
             addresses:
             - {{ metal_lb_range }}
 
-    - pause: seconds=30
+
+#    - name: Wait till all pods are running
+#      kubernetes.core.k8s_info:
+#        kind: Pod
+#        wait: yes
+##        namespace: default
+#        wait_sleep: 3
+#        wait_timeout: 10
+
+
 
     - name: Load address pool
-      become_user: "{{ ansible_user }}"
-      become_method: sudo
-      command: kubectl apply -f ~/address-pool.yml
+      kubernetes.core.k8s:
+        state: present
+        src: ~/address-pool.yml
+#      become_user: "{{ ansible_user }}"
+#      become_method: sudo
+#      command: kubectl apply -f ~/address-pool.yml
 
     - name: Load L2Advertisement
-      become_user: "{{ ansible_user }}"
-      become_method: sudo
-      command: kubectl apply -f ~/l2advertisement.yml
+#      become_user: "{{ ansible_user }}"
+#      become_method: sudo
+      kubernetes.core.k8s:
+        state: present
+        src: ~/l2advertisement.yml
+#      command: kubectl apply -f ~/l2advertisement.yml
 ...
 

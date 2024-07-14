@@ -1,51 +1,71 @@
 # k8s_master_init.yml
 
 - hosts: masters
-  become: yes
-  become_method: sudo
-  become_user: root
-  gather_facts: yes
+#  become: yes
+#  become_method: sudo
+#  become_user: root
   connection: ssh
-  roles:
-    - atomika_base
+  vars_prompt:
+    # TODO rename to secondary_kubectl_user and perhaps reword prompt?
+#    - name: kubectl_user_temp
+#      prompt: "Enter the name of the existing user that will execute kubectl commands or press enter when machine only has the bootstrapped ansible account."
+#      private: no
+#      default:
 
   tasks:
-
    - name: Initializing Kubernetes Cluster
      become: yes
      command: kubeadm init --pod-network-cidr=10.244.0.0/16 --control-plane-endpoint=k8scp:6443 --upload-certs
      run_once: true
 
-   - pause: seconds=30
+   - name: Download flannel manifest.
+     ansible.builtin.get_url:
+       url: https://raw.githubusercontent.com/flannel-io/flannel/master/Documentation/kube-flannel.yml
+       dest: ~/kube-flannel.yaml
+       mode: '0664'
 
-   - name: Copy kube config for designated users
-     ansible.builtin.include_tasks: internal/i_copy_kube_config.yml
+   - name: Apply flannel manifest to create overlay network.
+     become: true
+     kubernetes.core.k8s:
+       kubeconfig: /etc/kubernetes/admin.conf
+       state: present
+       src: ~{{ ansible_user }}/kube-flannel.yaml
+     register: pod_list
+
+    #   - name: Wait till all pods are running
+#     kubernetes.core.k8s_info:
+#      kind: Pod
+#      wait: yes
+##      namespace: kube-flannel
+#      wait_sleep: 3
+#      wait_condition:
+#        type: Ready
+
+#   - name: Create Pod Network & RBAC.
+#     become_user: "{{ ansible_user }}"
+#     become_method: sudo
+#     become: yes
+#     command: "{{ item }}"
+#     with_items:
+#       kubectl apply -f https://raw.githubusercontent.com/flannel-io/flannel/master/Documentation/kube-flannel.yml
+##        - kubectl apply -f https://github.com/flannel-io/flannel/releases/latest/download/kube-flannel.yml
+##        - curl https://raw.githubusercontent.com/coreos/flannel/2140ac876ef134e0ed5af15c65e414cf26827915/Documentation/kube-flannel.yml -o /home/{{ ansible_user }}/kube-flannel.yml
+##        - sed -i 's/io\/v1beta1/io\/v1/' /home/{{ ansible_user }}/kube-flannel.yml
+##        - kubectl apply -f /home/{{ ansible_user }}/kube-flannel.yml
+##        - rm /home/{{ ansible_user }}/kube-flannel.yml
+#
+#   - pause: seconds=30
 
    - name: Switch on scheduling and metallb announcing when no workers in cluster
-     become_user: "{{ ansible_user }}"
-     become_method: sudo
-     become: yes
+#     become_user: "{{ ansible_user }}"
+#     become_method: sudo
+     become: true
      command: "{{ item }}"
-     run_once: true
+#     run_once: true
      when: "'workers' not in groups"
      with_items:
-       - kubectl taint node --all node-role.kubernetes.io/control-plane:NoSchedule-        
-       - kubectl label nodes --all node.kubernetes.io/exclude-from-external-load-balancers-
-
-   - name: Create Pod Network & RBAC.
-     become_user: "{{ ansible_user }}"
-     become_method: sudo
-     become: yes
-     command: "{{ item }}"
-     with_items:
-       kubectl apply -f https://raw.githubusercontent.com/flannel-io/flannel/master/Documentation/kube-flannel.yml
-#        - kubectl apply -f https://github.com/flannel-io/flannel/releases/latest/download/kube-flannel.yml
-#        - curl https://raw.githubusercontent.com/coreos/flannel/2140ac876ef134e0ed5af15c65e414cf26827915/Documentation/kube-flannel.yml -o /home/{{ ansible_user }}/kube-flannel.yml
-#        - sed -i 's/io\/v1beta1/io\/v1/' /home/{{ ansible_user }}/kube-flannel.yml
-#        - kubectl apply -f /home/{{ ansible_user }}/kube-flannel.yml
-#        - rm /home/{{ ansible_user }}/kube-flannel.yml
-
-   - pause: seconds=30
+       - kubectl --kubeconfig /etc/kubernetes/admin.conf taint node --all node-role.kubernetes.io/control-plane:NoSchedule-
+       - kubectl --kubeconfig /etc/kubernetes/admin.conf label nodes --all node.kubernetes.io/exclude-from-external-load-balancers-
 
 ...
 

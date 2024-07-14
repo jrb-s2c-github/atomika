@@ -1,4 +1,7 @@
-# k8s_master_init.yml
+# k8s_init.yml
+
+- name: Scan keys
+  ansible.builtin.import_playbook: admin/key_scan.yml
 
 - hosts: masters, comasters, workers
   become: yes
@@ -8,6 +11,15 @@
   connection: ssh
   roles:
     - atomika_base
+    
+  tasks:
+    #
+    # required by wormhole, but with benefit that all nodes will do this in parallel instead of in two steps during the
+    # initialization of firstly master and secondly joining nodes
+    #
+    - name: Pull images required by Kubernetes
+      become: yes
+      shell: kubeadm config images pull
 
 ...
 
