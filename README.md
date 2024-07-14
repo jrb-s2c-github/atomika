@@ -109,13 +109,14 @@ in action.
 
 ## Test Jetpack and Ingress routing
 
-Get Atomika up and running.
+Get Atomika up and running as per the "guide for the impatient" above.
+
+Add ip address of the worker node to the builder at the very bottom of the basic inventory. 
+In case of only running a single node, the ip address should be that of the master
 
 Run jetpack to checkout, compile, integrate and deploy the sample deployment 
 declarations from jetpack/vars.yml:
 >ansible-playbook jetpack/deploy.yml -i atomika/inventory/basic_inventory.yml -K
-
-Change inventory file should you not be using the basic inventory.
 
 Enter 'atmin' as sudo password and hit enter to clone without passing a security credential.
 
