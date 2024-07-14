@@ -1,4 +1,5 @@
->>> Work has started on V5_1. Follow progress [here](https://github.com/jrb-s2c-github/atomika/tree/V5_1?tab=readme-ov-file#v5--20240623).  
+>>> V5_1 has been release. Keep on reading. Cluster formation is now much faster and easier to execute. Only five steps
+are required to have it up and running.
 
 # Atomika
 ```
@@ -28,18 +29,20 @@
 Atomika is a collection of Ansible playbooks to boot a bare-metal Kubernetes cluster. It provides support for high 
 availability and opens external access using a [Kubernetes Ingress](https://kubernetes.io/docs/concepts/services-networking/ingress/). 
 
-A secondary set of playbooks reads deployment declarations, integrates container images and deploys to Atomika. Maven JIB 
+A second set of playbooks reads deployment declarations, integrates container images and deploys to Atomika. Maven JIB 
 is used to integrate Docker containers and kubectl used to set up the required Service and Deployment orchestration agents. 
 
 Atomika is intended as a play or development environment. It is not recommended for production use without further hardening. 
 
 Atomika allows for single-node, basic and high availability topologies. Guidance is given lower down how to declare each 
-topology. Do not try to boot high availability out of the box. Rather, first get the single node topology going, followed 
-by a basic topology consisting of one control plane and one worker. Only then attempt to start up an Atomika cluster in 
-high availability mode. 
+topology. Do not try to boot high availability out of the box. Rather, get a basic topology consisting of one control
+plane and one worker going the first time around.  
 
 Atomika has been tested on a cluster of Unbuntu 22 machines running inside Windows. However, it can run on any collection 
 of physical and virtual machines.
+
+Ansible controllers pre-loaded with the correct version of Atomika is maintained by the [jrb-s2c-github/atomika_wormhole](https://github.com/jrb-s2c-github/atomika_wormhole)
+project and can be downloaded from [here](https://drive.google.com/drive/folders/1OY1rDy6MwYi0iXD159igjnJ7IOrBbJ1U).
 
 ## Dzone.com articles on Atomika
 - [Running Ansible From Windows Using Virtualization](https://dzone.com/articles/running-ansible-from-windows-using-virtualization) 
@@ -48,11 +51,64 @@ of physical and virtual machines.
 - [Fast Deployments of Microservices Using Ansible and Kubernetes](https://dzone.com/articles/fast-feature-branch-deployments-of-micro-services)
 - [Safe Clones With Ansible](https://dzone.com/articles/safe-clones-with-ansible)
 
-## Contributing
-Should you wish to contribute or improve, feel free to fork and create a pull request back for me to approve. Alternatively,
-drop me a message on linkedin at https://www.linkedin.com/in/janrb/ to be added as a contributor.
+## Using Wormhole as the Ansible controller
+Wormhole comes with both Ansible and ATomika cloned from GitHub. has been Atomika's 
+root ($atomika-home) is located at /home/ansible/atomika/ meaning:
+* its playbooks is at /home/ansible/atomika/atomika;
+* those of jetpack at /home/ansible/atomika/jetpack and
+* the inventory templates at /home/ansible/atomika/inventory.
 
-## Booting an Atomika K8S cluster
+The ansible user should be accessed using the ansible/ansible.pub keypair located at the
+root of atomika_wormhole with sudo password of 'atmin'.
+
+## Guide for the impatient 
+
+> It only takes five steps to start the Atomika Kubernetes cluster!
+
+#### Step 1
+*Download* the matching version of an Atomika Wormhole image from [here](https://drive.google.com/drive/folders/1OY1rDy6MwYi0iXD159igjnJ7IOrBbJ1U).
+
+#### Step 2
+*Create two nodes*. On Windows this can be done by running the liftoff Powershell script from the [jrb-s2c-github/atomika_wormhole](https://github.com/jrb-s2c-github/atomika_wormhole) 
+project in a PowerShell admin console. This script can be found at startup_scripts/liftoff.ps1. 
+
+Pick one of the two machines and use it as the Ansible controller. 
+
+#### Step 3
+*Register the nodes's private key* with your ssh-agent. The ansible/ansible.pub keypair can be found in the root of 
+atomika-wormhole.
+
+#### Step 4
+*Configure a co-plane/worker topology* in $atomika-home/atomika/inventory/basic_inventory.yml. Change
+the ip addresses to that of the two nodes started in step 2. Ignore the builder group 
+until your cluster formed, and you are ready for fast deployments using jetpack.
+
+#### Step 5
+*Boot Atomika from /home/ansible/atomika/*:
+> ansible@wormhole:/home/ansible/atomika/$ ansible-playbook -i atomika/inventory/ha_atomika_inventory.yml atomika/k8s_boot.yml -K -e metal_lb_range=172.26.64.3-172.26.64.200
+
+The sudo password is 'atmin' and ip range should be on the gateway's subnet. It will be used to select an ip address for 
+the Ingress from. Run 'ip route' to find the gateway's ip address. 
+
+The first time things can time out. Be patient, running '*kubectl get nodes*' as the ansible user from time to time. You 
+can also rerun k8s_boot.yml to destroy the cluster and try everything again.
+
+#### Test for yourself
+This test is also automatically performed at the very end of the boot to test readiness .
+
+*Test the Kubernetes Ingress:*
+> ansible@wormhole:/home/ansible/atomika/$ kubectl -n ingress-nginx get svc ingress-nginx-controller
+
+Note the external IP and map it to www.demo.io in the hosts file (/etc/hosts or 
+C:\Windows\System32\drivers\etc\hosts). Open www.demo.io in a browser and see Atomika 
+in action.
+
+## Contributing
+Should you wish to contribute or improve code or documentation, feel free to fork and 
+create a pull request back for me to approve. Alternatively, drop me a message on 
+LinkedIn at https://www.linkedin.com/in/janrb/ to be added as a contributor.
+
+## Booting an Atomika K8S cluster the long way
 The first step is to read this [Dzone.com](https://dzone.com/articles/ansible-boots-kubernetes) article very carefully 
 to gain background knowledge and to get Ansible up and running.
 
@@ -63,7 +119,13 @@ as outlined lower down.
 Bootstrapping adds the same user account to all nodes. The Ansible control node uses this account to connect to the 
 target nodes over SSH. It assigns sudo rights and associates a private\public key pair for authentication.
 
-Bootstrapping consists of the following steps:
+Bootstrapping can be skipped by downloading an image prepared by the [jrb-s2c-image/atomika-wormhole](https://github.com/jrb-s2c-github/atomika_wormhole)
+project. The images are available [here](https://drive.google.com/drive/folders/1OY1rDy6MwYi0iXD159igjnJ7IOrBbJ1U). Download 
+one with 'atomika' (and not 'bare') in the name and with a version that corresponds to the version of Atomika being used. *User
+access is via the ansible/ansible.pub keypair in the root of atomika-wormhole. These keys 
+authenticates a sudo user with the name of ansible.*
+
+However, one can also bootstrap from your own Linux image as follows:
 1) Configure the node(*s*) in the relevant inventory file under the atomika/inventory/ folder that matches the topology 
 of your choice. Also, change the ansible_user field to that of root or a sudo account on the target machine. *This should 
 be changed back to ansible once bootstrapping has been concluded.*
@@ -78,19 +140,22 @@ private key safely and replace the file "ansible.pub" in the bootstrap folder of
 Should each machine be accessible by different accounts, you should bootstrap machine-by-machine using the -l switch: 
 >**ansible-playbook --ask-pass   bootstrap/bootstrap.yml -i atomika/inventory/basic_inventory.yml -K -l machineX**
 
-Note that this play will ask for both the account and the sudo password. Should it be a root account the "-K" switch should 
-be removed so the sudo password is not prompted for.
+5) Install the nuts and bolts required by Kubernetes:
+>**ansible-playbook -i atomika/k8s_init.yml atomika/inventory/*****.yml -K**
+
+Note that above plays will ask for both the account and the sudo password. Should it 
+be a root account the "-K" switch can be removed and the sudo password will not be 
+prompted for.
 
 This [Dzone.com](https://dzone.com/articles/ansible-boots-kubernetes) article also provides a more detailed explanation 
 on bootstrapping.
 
-# TODO run k8s_init.yml only once
-
 ### Configure single node topology
 It is possible to boot a single node K8S cluster. It may not be best practice, but it can be useful for local testing using 
-the Jetpack playbooks for fast local deployments.
+the Jetpack playbooks for fast local deployments. In my experience the first cluster 
+formation takes a bit longer though.
 
-The details of the node should be configured in the Ansible repository locatated at atomika/inventory/single_node_inventory.yml. 
+The details of the node should be configured in the Ansible repository located at atomika/inventory/single_node_inventory.yml. 
 
 Since there is only one node, the master (control-plane) will have to double up as a worker as well. Consequently,
 the taint that prevents pods from being scheduled on control planes are removed during boot up. Similarly, a label is
@@ -117,24 +182,37 @@ In short the steps are:
 * Configure the co-masters 
 * Configure the machine that will host HAProxy
 
-### TODO Raspberry Pi 
+### TODO Raspberry Pi and Arch Linux
 
 ### Booting Atomika
 1) Configure the correct topology under atomika/inventory as explained higher up. Ensure that the ip address and location of 
 the private key of the ansible user created during bootstrapping are correct for every target node referenced in the inventory. 
 2) Boot the Atomika cluster:
 >ansible-playbook -i atomika/inventory/ha_atomika_inventory.yml atomika/k8s_boot.yml -K -e metal_lb_range=172.26.64.3-172.26.64.200
-#### TODO explain switch for secondary/kubectl_temp user - disabled in command above ==> remove to tips and tricks how to create second user with second_kubectl_user switch
-#### TODO description of how to establish metallb range:
-ip route
-https://serverfault.com/questions/1143158/metallb-ip-address-is-not-accessible-when-trying-to-connect-from-host-machine-h/1162349#1162349
-https://learn.microsoft.com/en-us/windows-server/networking/sdn/technologies/hyper-v-network-virtualization/hyperv-network-virtualization-technical-details-windows-server
 
+When prompted, provide a range of IP addresses that are available to be assigned to the Ingress. Press enter to accept 
+the default range of 192.168.68.200-192.168.68.210. Other formats that are acceptable are given on the [MetalLB](https://metallb.io/) website.
+The IP range should be on the same subnet as your gateway. Should you be running virtual machines on Windows using Hyper-V's 
+default switch, this gateway is located on the subnet with the lowest numeric value in 
+use by the vm's. More can be read [here](https://learn.microsoft.com/en-us/windows-server/networking/sdn/technologies/hyper-v-network-virtualization/hyperv-network-virtualization-technical-details-windows-server),
+but Windows routes traffic between its vm's internally using a star network. The 
+gateway can be determined by running and seeing that the gateway is 172.26.64.1:
+```aidl
+janrb@dquick:~/atomika$ ip route
+default via 172.26.64.1 dev eth0
+172.18.0.0/16 dev docker0 proto kernel scope link src 172.18.0.1 linkdown
+172.19.0.0/16 dev br-627ac2a318b9 proto kernel scope link src 172.19.0.1 linkdown
+172.26.64.0/20 dev eth0 proto kernel scope link src 172.26.68.178
+```
+In this case the MetalLb can be instructed to use an ip address between 172.26.64.2-172.26.64.200
 
-When prompted for:
-* Enter the user that will be issuing the kubectl commands 
-* A range of IP addresses that are available to be assigned to the Ingress. Press enter to accept the default range of 
-192.168.68.200-192.168.68.210. Other formats that are acceptable are given on the [MetalLB](https://metallb.io/) website.
+Since images are pulled from container registries, the first boot might fail. Keep on waiting and/or running the boot
+command. Once a cluster formed once, subsequent boots will be much faster. 
+
+#### By default, the user named 'ansible' will be given rights to run kubectl commands during the booting process. 
+In the tips and tricks section lower down, a way is given to extend this rights to a 
+second user. However, nothing prevents you to copy /etc/kubernetes/admin.conf to any 
+user's home directory that has to control the kube.
 
 ## Admin commands
 Administrative playbooks can be found in the atomika/admin folder.
@@ -143,8 +221,7 @@ Administrative playbooks can be found in the atomika/admin folder.
 It is possible to reset each node in the cluster with a single command:
 >ansible-playbook atomika/admin/kubeadm_reset.yml -i atomika/inventory/*******.yml
 
-This runs "*kubeadm reset*" on each node in the cluster and *must* be run to tear down a cluster after use or a failed 
-boot up.
+However, this reset is enforced every time the k8s_boot.yml runs.
 
 ## Jetpack: Declarative deployments of Spring microservices using Maven JIB
 A fuller description on how to declare Continuous Integration and Deployment (CI/CD) for a Spring microservices project 
@@ -318,7 +395,7 @@ repositories regardless whether it is private or not. This classic access token 
 *repo, admin:public_key, user, and admin:gpg_key*. 
 
 ## Testing Ingress and MetalLB LoadBalancer 
-This is performed at the end of the boot, but are documented here for the sake completion.
+This is performed at the end of the boot, but are documented here for the sake of completion.
 
 1) Run 'kubectl get service ingress-nginx-controller --namespace=ingress-nginx' and check that an IP address has been assigned to field "EXTERNAL-IP". This means MetalLB is listening on this IP address.
 2) Run 'kubectl create deployment demo --image=httpd --port=80' to install web server
@@ -389,50 +466,52 @@ Jetpack to deploy using Maven, JIB, YAML and Kubectl.
 11) Moved kubectl commands from ansible commands to the ansible kubernetes galaxy collection
 12) Refactored ansible code
 
-### V5_1 (Alpha release)
-1) Removed reboot step to ease the booting of Windows clusters on the HyperV default switch
+### V5_1 2024/07/15
+1) Removed machine reboots steps and removed most of the waits. Cluster formation rarely
+required this after all images have been pulled during the first boot.    
 2) A separate project was created at [jrb-s2c-github/atomika_wormhole](https://github.com/jrb-s2c-github/atomika_wormhole)
-that a) will prepare machines for use as Ansible control Kubernetes nodes and b) allow such machines to boot as Window VM's 
-without requiring human interaction with HyperV. The presence of customized Ubuntu boot images for download mandates a 
-separated project to prevent Atomika cloning from taking too long.  
+that a) will prepare machines for use as Ansible control Kubernetes nodes and b) allow such machines 
+to boot without requiring human interaction.   
 3) Added default ssh keys that will be baked into the atomika_wormhole boot image. The onus will be on the user to replace
 this keypair after first use should the security requirements warrant it.
 4) Improved documentation in general
-5) Added option to only have the bootstrapped ansible account
+5) Refactored and simplified code to improve flow of execution. This speeds up cluster formation.
+6) Keyscanning of controlled nodes by Ansible controller was implemented by the key_scan.yml playbook.
+7) Removed the amount of 'prompts/-e switches' to provide by making cluster formation more opinionated. For instance,
+providing a second user to be given a kubeconfig for kubectl commands is not mandatory anymore.
 
 ## Outstanding
-1) Improve flow of cluster bootup. Currently, common task are firstly done on the control planes then on the workers. It would
-be better to perform all the common task simultaneously. 
-2) Is it possible to upgrade the cluster K8s version from Ansible? 
-3) Graphical user interface to configure bootstrapping, Atomika topology and Jetpack CI/CD 
-4) Allow to clone public repos without having to authorize using a GitHub access token
-5) Should it be possible to skip "mvn install" step? The JIB command is sufficient for single module projects.
-6) Split atomika_base role out as it should only run once to prepare a target node for orchestration 
-7) Add group_vars to hold version info of metallb, ingress-nginx from k8s_ingress_controller.yml, k8s and containerd. Can 
-a BOM be generated from this?  
-8Add support for other Linux distro's using some sort of templating, starting with the undocumented ARCH linux/ Raspberry PI's 
-9) Jetpack should not delete namespaces everytime, it should only deploy what has changed 
-10) Find a way to configure Ubuntu from scripts instead of having to do it using mouse clicks. Can CloudInit do this? 
-11) Once Ubuntu nodes can be configured from scripts, work on a way to boot a Windows cluster from scratch with one click
+1) Is it possible to upgrade the cluster K8s version from Ansible? 
+2) Graphical user interface to configure bootstrapping, Atomika topology and Jetpack CI/CD 
+3) Allow to clone public repos without having to authorize using a GitHub access token 
+4) Should it be possible to skip "mvn install" step? The JIB command is sufficient for single module projects. 
+5) Split atomika_base role out as it should only run once to prepare a target node for orchestration 
+6) Add group_vars to hold version info of metallb, ingress-nginx from k8s_ingress_controller.yml, k8s and containerd. Can 
+a BOM be generated from this?
+7) Add support for other Linux distro's using some sort of templating, starting with the undocumented ARCH linux/ Raspberry PI's 
+8) Jetpack should not delete namespaces everytime, it should only deploy what has changed
+9) Once Ubuntu nodes can be configured from scripts, work on a way to boot a Windows cluster from scratch with one click
 from a GUI. 
-12) Testing harness 
-13) Run docker registry on one node so all images can be pulled from there by the other nodes in the cluster
-14) DNS server to register name of Ingress to remove need to mess with hosts files
-15) Integration with ansible lint on some level
-16) Defaulting metallb range to something on the gateway's local subnet 
-17) Checking whether things can be sped up by not gathering facts every time?
+10) Testing harness 
+11) Run docker registry on one node so all images can be pulled from there by the other nodes in the cluster 
+12) DNS server to register name of Ingress to remove need to mess with hosts files. This
+is only a problem when not using Wormhole.
+13) Integration with ansible lint on some level 
+14) Defaulting metallb range to something on the gateway's local subnet 
+15) Checking whether things can be sped up by not gathering facts every time?
 
 # Common problems
 
 ## Playbook refuse to start due to connection issues
 The Ansible controller uses SSH to connect to the target nodes. Common solutions to fix connection failure are:
-1) Sign on from the Ansible controller to the target node using the user configured in the inventory or perform key scanning
-to establish trust between the servers
-2) Check that the ansible user set in the inventory is correct
+1) Sign on from the Ansible controller to the target node using the user configured in 
+the inventory or perform key scanning to establish trust between the servers. This 
+should have been resolved with version 5.1.
+2) Check that the ansible user set in the inventory is correct. This should not happen when sticking to wormhole images.
 3) Make sure that you created the public/private keys for the user configured for each node in the inventory. Ansible user 
-is used in the sample inventories and is therefore recommended way.
-4) Should there be a workers group even thought it is empty the taints preventing scheduling on masters will not be removed
-and the cluster will never stabilize.
+is used in the sample inventories and is therefore recommended way. This should not happen when sticking to wormhole images.
+4) Should there be an empty workers group the taints/labels preventing scheduling on masters and MetalLB speakers to announce
+will not be removed from masters and the cluster will never stabilize.
 
 ## Tips and tricks
 * https://zwischenzugs.com/2021/08/27/five-ansible-techniques-i-wish-id-known-earlier/
@@ -442,18 +521,21 @@ and the cluster will never stabilize.
 * Add the "-vvv" switch to the ansible-playbook command for verbose feedback.
 * The kubectl commands can be run on any control-plane
 * Error: "dr: \\\"cni0\\\" already has an IP address different from" ==> run *"ip link delete cni0 && ip link delete flannel.1"*
-* On the master node the cluster can be interrogated on the master: *"sudo kubectl --kubeconfig /etc/kubernetes/admin.conf get nodes"*
-This is especially useful in the time between cluster initialization and the copying of the kubeconfig from this location to 
-the home directory of the ansible user.
-* Command completion of kubectl will be enabled. Should it not work, install bash completion using *sudo apt install bash-completion*
-followed by signing out and back in again. This is not required when booting from a wormhole image.
+* **On the master node the cluster can also be interrogated by root: "sudo kubectl 
+--kubeconfig /etc/kubernetes/admin.conf get nodes"**. This is especially useful between 
+cluster initialization and the copying of the kubeconfig into the home directory of the 
+ansible user.
+* Command completion of kubectl will be enabled by k8s_boot.yml, however signing out and
+in might be required. *On Wormhole command completion works out of the box*. Should you
+not use Wormhole, bash completion should be installed (*sudo apt install bash-completion*) 
+followed by signing out and back in again. 
+* **It is possible to instruct Atomika to assign rights to a second user**, over and above
+the ansible user, **to use kubectl**. Append *'-e second_kubectl_user=${second_user}*' to k8s_boot.yml.
 
 ## Other things to keep in mind
-1) Check that server IP's are correct in the inventory
-2) Check that user account is correct during bootstrapping and that it has been changed to the ansible user after bootstrapping
-2) Run kubeadm_reset.yml to reset clusters after use or upon failure 
-3) Run HAProxy on its own node
-4) Always reset kubeadmin on a K8S node before removing it from the cluster. A common problem is to assign a K8S node as the
-HAProxy host after forgetting to reset it using kubeadm. This can result in port conflicts between Kubelet and HAProxy.
+1) Check that ip addresses are correct in the inventory
+2) Check that user account is correct during bootstrapping and that it has been changed
+to the ansible user after bootstrapping 
+3) Run HAProxy on its own node 
 5) Builder server should not be a control-plane unless it is a single node cluster. Should apps image fail to deploy 
 (ErrImgPull), this is most likely the reason.

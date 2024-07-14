@@ -1,10 +1,11 @@
 #print_banner.yml
+
 - hosts: localhost
   connection: local
   vars:
     L00: "##################################################################"
     L01: "#                                                                #"
-    L02: "#            ATOMIKA: Local deployments to Kubernetes            #"
+    L02: "#    ATOMIKA: Local deployments to Kubernetes (on Windows)       #"
     L03: "#                                                                #"
     L04: "#                     .   .xXXXX+.   .                           #"
     L05: "#                .   ..   xXXXX+.-   ..   .                      #"
@@ -24,7 +25,7 @@
     L19: "#           xxxxxxxxxxxxxxxxxxxxxxxxxxxxx+.--                    #"
     L20: "#            xxxxxxxxxxxxxxxxxxxxxxxxxxxxx+-  Ojosh!ro           #"
     L21: "#                                                                #"
-    L22: "#   MIT License, Copyright (c) 20241 S2C Consulting (PtyLtd ZA)   #"
+    L22: "#   MIT License, Copyright (c) 20241 S2C Consulting (PtyLtd ZA)  #"
     L23: "#                                                                #"
     L24: "##################################################################"
 

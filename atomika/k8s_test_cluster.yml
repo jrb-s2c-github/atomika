@@ -37,7 +37,7 @@
         search_string: www.demo.io
         line: "{{ ingress_nginx_svc_register.resources[0]['status']['loadBalancer']['ingress'][0]['ip']}} www.demo.io"
 
-    - name: Test readyness
+    - name: Test readiness
       ansible.builtin.uri:
         url: http://www.demo.io
       register: result
