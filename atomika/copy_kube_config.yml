@@ -54,18 +54,6 @@
           owner: "{{ second_kubectl_user }}"
           group: "{{ second_kubectl_user }}"
           mode: '0640'
-  #
-  #    - name: Remove the cache directory for secondary user.
-  #      file:
-  #        path: /home/{{ second_kubectl_user }}/.kube/cache
-  #        state: absent
-
-  #    - name: Ensuring .bashrc exists for secondary user.
-  #      become: true
-  #      ansible.builtin.file:
-  #        path: /home/{{ second_kubectl_user }}/.bashrc
-  #        state: touch
-  #        mode: '0640'
 
       - name: Configure kubectl command auto-completion for secondary user.
         become: true

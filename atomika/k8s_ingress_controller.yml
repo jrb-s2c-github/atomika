@@ -56,7 +56,7 @@
         dest: ~/metallb.yaml
         mode: '0664'
 
-    - name: Apply metallb manifest to the cluster.
+    - name: Apply MetalLB manifest to the cluster.
       kubernetes.core.k8s:
         state: present
         src: ~/metallb.yaml
@@ -119,16 +119,11 @@
       kubernetes.core.k8s:
         state: present
         src: ~/address-pool.yml
-#      become_user: "{{ ansible_user }}"
-#      become_method: sudo
-#      command: kubectl apply -f ~/address-pool.yml
 
     - name: Load L2Advertisement
-#      become_user: "{{ ansible_user }}"
-#      become_method: sudo
+
       kubernetes.core.k8s:
         state: present
         src: ~/l2advertisement.yml
-#      command: kubectl apply -f ~/l2advertisement.yml
 ...
 

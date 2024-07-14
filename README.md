@@ -1,5 +1,5 @@
->>> V5_1 has been release. Keep on reading. Cluster formation is now much faster and easier to execute. Only five steps
-are required to have it up and running.
+>>> V5_1 has been released. Cluster formation is now much faster and easier to execute. Only five steps
+are required to have it up and running. 
 
 # Atomika
 ```
@@ -115,6 +115,8 @@ Run jetpack to checkout, compile, integrate and deploy the sample deployment
 declarations from jetpack/vars.yml:
 >ansible-playbook jetpack/deploy.yml -i atomika/inventory/basic_inventory.yml -K
 Change inventory file should you not be using the basic inventory.
+
+Enter 'atmin' as sudo password and hit enter to clone without passing a security credential.
 
 Open http://www.demo.io/env1/hello and http://www.demo.io/env2/hello from a browser (or 
 curl) to see the [Kubernetes Ingress](https://kubernetes.io/docs/concepts/services-networking/ingress/) 

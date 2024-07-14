@@ -1,16 +1,8 @@
 # k8s_master_init.yml
 
 - hosts: masters
-#  become: yes
-#  become_method: sudo
-#  become_user: root
   connection: ssh
   vars_prompt:
-    # TODO rename to secondary_kubectl_user and perhaps reword prompt?
-#    - name: kubectl_user_temp
-#      prompt: "Enter the name of the existing user that will execute kubectl commands or press enter when machine only has the bootstrapped ansible account."
-#      private: no
-#      default:
 
   tasks:
    - name: Initializing Kubernetes Cluster
@@ -56,12 +48,9 @@
 #
 #   - pause: seconds=30
 
-   - name: Switch on scheduling and metallb announcing when no workers in cluster
-#     become_user: "{{ ansible_user }}"
-#     become_method: sudo
+   - name: Switch on scheduling and MetalLB announcing when no workers in cluster
      become: true
      command: "{{ item }}"
-#     run_once: true
      when: "'workers' not in groups"
      with_items:
        - kubectl --kubeconfig /etc/kubernetes/admin.conf taint node --all node-role.kubernetes.io/control-plane:NoSchedule-
