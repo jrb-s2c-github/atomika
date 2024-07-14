@@ -114,6 +114,7 @@ Get Atomika up and running.
 Run jetpack to checkout, compile, integrate and deploy the sample deployment 
 declarations from jetpack/vars.yml:
 >ansible-playbook jetpack/deploy.yml -i atomika/inventory/basic_inventory.yml -K
+
 Change inventory file should you not be using the basic inventory.
 
 Enter 'atmin' as sudo password and hit enter to clone without passing a security credential.
@@ -123,7 +124,7 @@ curl) to see the [Kubernetes Ingress](https://kubernetes.io/docs/concepts/servic
 routing to two different internal Kubernetes services.
 
 Here is how this routing is configured:
-```aidl
+```
 ingress:
   host: www.demo.io
   rules:
