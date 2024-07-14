@@ -3,7 +3,7 @@ are required to have it up and running.
 
 # Atomika
 ```
- ATOMIKA: Local deployments to Kubernetes
+ ATOMIKA: Local deployments to Kubernetes (on Windows)
           
                     .   .xXXXX+.   .
                .   ..   xXXXX+.-   ..   .   

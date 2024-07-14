@@ -1,6 +1,7 @@
 #print_banner.yml
 
 - hosts: localhost
+  gather_facts: no
   connection: local
   vars:
     L00: "##################################################################"
