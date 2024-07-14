@@ -1,3 +1,5 @@
+git_server_fqdn: github.com
+
 apps:
   - name: hello1
     github_account: jrb-s2c-github
@@ -41,7 +43,8 @@ mvn_parents:
   - name: hello1/hello_svc
 
 pre_k8s_cmds:
-  - kubectl create ns temp
+  - kubectl get nodes
 
 post_k8s_cmds:
-  - kubectl delete ns temp
+  - kubectl get pods -A
+

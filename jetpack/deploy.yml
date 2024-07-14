@@ -5,16 +5,35 @@
     - vars.yml
   vars_prompt:
     - name: github_token
-      prompt: "Enter your github personal access token?"
+      prompt: "Enter your github personal access token or hit enter for a public repo"
       private: true
   tasks:
+    - name: Remove test namespace
+      remote_user: ansible
+      kubernetes.core.k8s:
+        name: test
+        api_version: v1
+        kind: Namespace
+        state: absent
+
     - name: Install Maven
       ansible.builtin.apt:
         name: maven
         state: present
       become: true
 
-    - name: Checking out sources
+    # public repo
+    - name: Checking out sources from a public repo
+      ansible.builtin.git:
+        repo: "https://{{ git_server_fqdn }}/{{ item.github_account }}/{{ item.git_repo }}.git"
+        dest: "{{ item.name }}"
+        version: "{{ item.git_branch }}"
+      loop:
+        "{{ apps }}"
+      when: github_token == ""
+
+    # private repo
+    - name: Checking out sources from a private repo
       ansible.builtin.include_role:
         name: github-add-deploy-key
       vars:
@@ -28,17 +47,7 @@
         branch: "{{ item.git_branch }}"
       loop:
         "{{ apps }}"
-
-#  # should this step take forever, SSH is prompting for user authorization and the remote host's public key should be added to /etc/ssh/ssh_known_hosts
-## with key scan: ssh-keyscan -H remote_host.com >> /etc/ssh/ssh_known_host
-#    - name: Git checkouts
-#      ansible.builtin.git:
-#        repo: "https://github.com/jrb-s2c-github/{{ item.git_repo }}.git"
-#        dest: "~/{{ item.name }}"
-#        version: "{{ item.git_branch }}"
-#      loop:
-#        "{{ apps }}"
-
+      when: github_token != ""
 
     - name: Maven install
       ansible.builtin.command: "mvn install"
@@ -100,7 +109,7 @@
           - pyyaml
           - kubernetes
 
-    - name: Remove all k8s namespaces
+    - name: Remove jetpack namespaces
       remote_user: ansible
       kubernetes.core.k8s:
         kubeconfig: /home/ansible/.kube/config
@@ -111,7 +120,17 @@
       loop:
         "{{ namespaces }}"
 
-    - pause: seconds=30
+    - name: Wait till jetpack namespaces have been deleted
+      kubernetes.core.k8s_info:
+        name: "{{ item.name }}"
+        api_version: v1
+        kind: Namespace
+        wait_sleep: 1
+        wait_timeout: 30
+        wait_condition:
+          type: Absent
+      loop:
+        "{{ namespaces }}"
 
     - name: Create k8s namespaces
       remote_user: ansible
