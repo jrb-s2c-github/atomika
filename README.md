@@ -52,7 +52,7 @@ project and can be downloaded from [here](https://drive.google.com/drive/folders
 - [Safe Clones With Ansible](https://dzone.com/articles/safe-clones-with-ansible)
 
 ## Using Wormhole as the Ansible controller
-Wormhole comes with both Ansible and ATomika cloned from GitHub. has been Atomika's 
+Wormhole comes with both Ansible and Atomika cloned from GitHub. Atomika's 
 root ($atomika-home) is located at /home/ansible/atomika/ meaning:
 * its playbooks is at /home/ansible/atomika/atomika;
 * those of jetpack at /home/ansible/atomika/jetpack and
@@ -72,6 +72,10 @@ root of atomika_wormhole with sudo password of 'atmin'.
 *Create two nodes*. On Windows this can be done by running the liftoff Powershell script from the [jrb-s2c-github/atomika_wormhole](https://github.com/jrb-s2c-github/atomika_wormhole) 
 project in a PowerShell admin console. This script can be found at startup_scripts/liftoff.ps1. 
 
+This will require 8GB of ram. Should ram be limited boot the control-plane/master with 2GB
+(change -MemoryStartupByte to 2GB in liftoff.ps1) or opt to use the single node inventory 
+in the inventory folder.
+
 Pick one of the two machines and use it as the Ansible controller. 
 
 #### Step 3
@@ -84,9 +88,9 @@ the ip addresses to that of the two nodes started in step 2. Ignore the builder 
 until your cluster formed, and you are ready for fast deployments using jetpack.
 
 #### Step 5
-*Boot Atomika from /home/ansible/atomika/*:
-> ansible@wormhole:/home/ansible/atomika/$ ansible-playbook -i atomika/inventory/ha_atomika_inventory.yml atomika/k8s_boot.yml -K -e metal_lb_range=172.26.64.3-172.26.64.200
-
+*Boot Atomika from /home/ansible/atomika/* from an Ansible controller (anyone of the two machines):
+> ansible@wormhole:/home/ansible/atomika/$ ansible-playbook -i atomika/inventory/basic_inventory.yml atomika/k8s_boot.yml -K -e metal_lb_range=172.26.64.3-172.26.64.200
+                                                                
 The sudo password is 'atmin' and ip range should be on the gateway's subnet. It will be used to select an ip address for 
 the Ingress from. Run 'ip route' to find the gateway's ip address. 
 
@@ -102,6 +106,34 @@ This test is also automatically performed at the very end of the boot to test re
 Note the external IP and map it to www.demo.io in the hosts file (/etc/hosts or 
 C:\Windows\System32\drivers\etc\hosts). Open www.demo.io in a browser and see Atomika 
 in action.
+
+## Test Jetpack and Ingress routing
+
+Get Atomika up and running.
+
+Run jetpack to checkout, compile, integrate and deploy the sample deployment 
+declarations from jetpack/vars.yml:
+>ansible-playbook jetpack/deploy.yml -i atomika/inventory/basic_inventory.yml -K
+Change inventory file should you not be using the basic inventory.
+
+Open http://www.demo.io/env1/hello and http://www.demo.io/env2/hello from a browser (or 
+curl) to see the [Kubernetes Ingress](https://kubernetes.io/docs/concepts/services-networking/ingress/) 
+routing to two different internal Kubernetes services.
+
+Here is how this routing is configured:
+```aidl
+ingress:
+  host: www.demo.io
+  rules:
+    - service: hello1
+      namespace: env1
+      ingress_path: /env1/hello
+      service_path: /
+    - service: hello2
+      namespace: env2
+      ingress_path: /env2/hello
+      service_path: /
+```
 
 ## Contributing
 Should you wish to contribute or improve code or documentation, feel free to fork and 
@@ -389,9 +421,11 @@ The command to integrate and deploy is:
 
 As always, take care to specify the correct topology inventory to use after the -i switch.
 
-The play will request a GitHub personal access token. Read this [DZone.com](https://dzone.com/articles/safe-clones-with-ansible) 
-article for the background, but this will initiate a safe GIT clone. For now this access token has to addedd to all GitHub 
-repositories regardless whether it is private or not. This classic access token should be given the following scopes/permissions: 
+The play will request a GitHub personal access token. Hit enter to bypass all this for public repos or
+enter a classic access token for private repos.
+
+Read this [DZone.com](https://dzone.com/articles/safe-clones-with-ansible) 
+article for the background, but this will initiate a safe GIT clone. This classic access token should be given the following scopes/permissions: 
 *repo, admin:public_key, user, and admin:gpg_key*. 
 
 ## Testing Ingress and MetalLB LoadBalancer 
@@ -479,26 +513,26 @@ this keypair after first use should the security requirements warrant it.
 6) Keyscanning of controlled nodes by Ansible controller was implemented by the key_scan.yml playbook.
 7) Removed the amount of 'prompts/-e switches' to provide by making cluster formation more opinionated. For instance,
 providing a second user to be given a kubeconfig for kubectl commands is not mandatory anymore.
+8) Jetpack can clone from public repos without requiring security tokens.
 
 ## Outstanding
 1) Is it possible to upgrade the cluster K8s version from Ansible? 
-2) Graphical user interface to configure bootstrapping, Atomika topology and Jetpack CI/CD 
-3) Allow to clone public repos without having to authorize using a GitHub access token 
-4) Should it be possible to skip "mvn install" step? The JIB command is sufficient for single module projects. 
-5) Split atomika_base role out as it should only run once to prepare a target node for orchestration 
-6) Add group_vars to hold version info of metallb, ingress-nginx from k8s_ingress_controller.yml, k8s and containerd. Can 
-a BOM be generated from this?
-7) Add support for other Linux distro's using some sort of templating, starting with the undocumented ARCH linux/ Raspberry PI's 
-8) Jetpack should not delete namespaces everytime, it should only deploy what has changed
-9) Once Ubuntu nodes can be configured from scripts, work on a way to boot a Windows cluster from scratch with one click
+2) Graphical user interface to configure bootstrapping, Atomika topology and Jetpack CI/CD
+3) Should it be possible to skip "mvn install" step? The JIB command is sufficient for single module projects. 
+4) Split atomika_base role out as it should only run once to prepare a target node for orchestration 
+5) Add group_vars to hold version info of metallb, ingress-nginx from k8s_ingress_controller.yml, k8s and containerd. Can 
+a BOM be generated from this? 
+6) Add support for other Linux distro's using some sort of templating, starting with the undocumented ARCH linux/ Raspberry PI's 
+7) Jetpack should not delete namespaces everytime, it should only deploy what has changed 
+8) Once Ubuntu nodes can be configured from scripts, work on a way to boot a Windows cluster from scratch with one click
 from a GUI. 
-10) Testing harness 
-11) Run docker registry on one node so all images can be pulled from there by the other nodes in the cluster 
-12) DNS server to register name of Ingress to remove need to mess with hosts files. This
-is only a problem when not using Wormhole.
-13) Integration with ansible lint on some level 
-14) Defaulting metallb range to something on the gateway's local subnet 
-15) Checking whether things can be sped up by not gathering facts every time?
+9) Testing harness 
+10) Run docker registry on one node so all images can be pulled from there by the other nodes in the cluster 
+11) DNS server to register name of Ingress to remove need to mess with hosts files. This
+is only a problem when not using Wormhole. 
+12) Integration with ansible lint on some level 
+13) Defaulting metallb range to something on the gateway's local subnet 
+14) Checking whether things can be sped up by not gathering facts every time?
 
 # Common problems
 
