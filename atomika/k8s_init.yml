@@ -11,6 +11,7 @@
   connection: ssh
   roles:
     - atomika_base
+    
   tasks:
     #
     # required by wormhole, but with benefit that all nodes will do this in parallel instead of in two steps during the
@@ -19,5 +20,6 @@
     - name: Pull images required by Kubernetes
       become: yes
       shell: kubeadm config images pull
+
 ...
 

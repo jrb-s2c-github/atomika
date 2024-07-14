@@ -42,6 +42,13 @@
 #        wait_condition:
 #          type: Running
 
+    - pause: seconds=30
+      #- name: FIXME
+      #become_user: "{{ ansible_user }}"
+      #become_method: sudo
+      #command: kubectl delete -A ValidatingWebhookConfiguration ingress-nginx-admission
+      #run_once: true
+
 #    - pause: seconds=30
 
 #    - name: Install Metallb1.
