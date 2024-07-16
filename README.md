@@ -1,4 +1,4 @@
->>> Work has started on V5_1. Soon it will be far easier to boot Atomika. Head over to [atomika_wormhole](https://github.com/jrb-s2c-github/atomika_wormhole) to see why. Progress can also be followed [here](https://github.com/jrb-s2c-github/atomika/tree/V5_1?tab=readme-ov-file#v5--20240623).
+>>> Please [click](https://github.com/jrb-s2c-github/atomika) here for the latest
 
 # Atomika
 Atomika is a collection of Ansible playbooks to boot a bare-metal Kubernetes cluster. It provides support for high 
