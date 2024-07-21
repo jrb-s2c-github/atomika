@@ -543,8 +543,9 @@ is only a problem when not using Wormhole.
 ## Playbook refuse to start due to connection issues
 The Ansible controller uses SSH to connect to the target nodes. Common solutions to fix connection failure are:
 1) Sign on from the Ansible controller to the target node using the user configured in 
-the inventory or perform key scanning to establish trust between the servers. This 
-should have been resolved with version 5.1.
+the inventory or perform key scanning to establish trust between the servers. This should 
+have been resolved with version 5.1, but sometimes /tmp/scan_keys.sh remains hanging around 
+and block creation next time around.
 2) Check that the ansible user set in the inventory is correct. This should not happen when sticking to wormhole images.
 3) Make sure that you created the public/private keys for the user configured for each node in the inventory. Ansible user 
 is used in the sample inventories and is therefore recommended way. This should not happen when sticking to wormhole images.
