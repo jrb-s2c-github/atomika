@@ -46,7 +46,7 @@
 
 - name: Add SSH public key to GitHub account
   ansible.builtin.uri:
-    url: "https://api.{{ git_server_fqdn }}/repos/{{ github_account_id }}/{{ repo }}/keys"
+    url: "https://api.{{ git_server_fqdn }}/repos/{{ git_account_id }}/{{ repo }}/keys"
     validate_certs: yes
     method: POST
     force_basic_auth: true
@@ -78,7 +78,7 @@
 
   - name: Clone the repository
     shell: |                                                                                                                                   
-      GIT_SSH_COMMAND="ssh -i {{ key_path }} -v -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null" {{ git_executable }} clone git@{{ git_server_fqdn }}:{{ github_account_id }}/{{ repo }}.git {{ clone_dest }}
+      GIT_SSH_COMMAND="ssh -i {{ key_path }} -v -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null" {{ git_executable }} clone git@{{ git_server_fqdn }}:{{ git_account_id }}/{{ repo }}.git {{ clone_dest }}
 
   - name: Switch branch
     shell: "{{ git_executable }} checkout {{ branch }}"
@@ -87,7 +87,7 @@
 
   - name: Delete SSH public key
     ansible.builtin.uri:
-      url: "https://api.{{ git_server_fqdn }}/repos/{{ github_account_id }}/{{ repo }}/keys/{{ create_result.json.id }}"
+      url: "https://api.{{ git_server_fqdn }}/repos/{{ git_account_id }}/{{ repo }}/keys/{{ create_result.json.id }}"
       validate_certs: yes
       method: DELETE
       force_basic_auth: true

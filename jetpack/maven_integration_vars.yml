@@ -1,11 +1,12 @@
+# Example of how to configure Jetpack to deploy images integrated using Maven JIB. See README.MD in root for explanation
+
 git_server_fqdn: github.com
 
 apps:
   - name: hello1
-    github_account: jrb-s2c-github
+    git_account: jrb-s2c-github
     git_repo: spinnaker_tryout
-    jib_dir: hello_svc
-    image: s2c/hello_svc
+    integration_dir: hello_svc
     namespace: env1
     git_branch: kustomize
     replicas: 3
@@ -13,10 +14,9 @@ apps:
       application.properties: |
         my_name: LocalKubeletEnv1
   - name: hello2
-    github_account: jrb-s2c-github
+    git_account: jrb-s2c-github
     git_repo: spinnaker_tryout
-    jib_dir: hello_svc
-    image: s2c/hello_svc
+    integration_dir: hello_svc
     namespace: env2
     config_map_path:
     git_branch: kustomize

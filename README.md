@@ -1,5 +1,5 @@
->>> V5_1 has been released. Cluster formation is now much faster and easier to execute. Only five steps
-are required to have it up and running. 
+>>> V5_2 is in progress. It caters for sourcing images from container registries over and above
+preparing its own using Maven JIB.
 
 # Atomika
 ```
@@ -29,8 +29,11 @@ are required to have it up and running.
 Atomika is a collection of Ansible playbooks to boot a bare-metal Kubernetes cluster. It provides support for high 
 availability and opens external access using a [Kubernetes Ingress](https://kubernetes.io/docs/concepts/services-networking/ingress/). 
 
-A second set of playbooks reads deployment declarations, integrates container images and deploys to Atomika. Maven JIB 
-is used to integrate Docker containers and kubectl used to set up the required Service and Deployment orchestration agents. 
+A second set of playbooks reads deployment declarations, integrates container images and deploys
+to Atomika. Images for deployment through Kubectl can be sourced in two ways:
+* Maven JIB can be used to integrate local containers using a build server on the local network
+for faster development deployments (it has been tested against GitHub repositories) 
+* Pulling from a container registry (it has been tested against a private GitHub Container registry)
 
 Atomika is intended as a play or development environment. It is not recommended for production use without further hardening. 
 
@@ -109,12 +112,14 @@ in action.
 
 ## Test Jetpack and Ingress routing
 
-Get Atomika up and running.
+Get Atomika up and running as per the "guide for the impatient" above.
+
+Add ip address of the worker node to the builder at the very bottom of the basic inventory. 
+In case of only running a single node, the ip address should be that of the master
 
 Run jetpack to checkout, compile, integrate and deploy the sample deployment 
 declarations from jetpack/vars.yml:
 >ansible-playbook jetpack/deploy.yml -i atomika/inventory/basic_inventory.yml -K
-Change inventory file should you not be using the basic inventory.
 
 Enter 'atmin' as sudo password and hit enter to clone without passing a security credential.
 
@@ -123,7 +128,7 @@ curl) to see the [Kubernetes Ingress](https://kubernetes.io/docs/concepts/servic
 routing to two different internal Kubernetes services.
 
 Here is how this routing is configured:
-```aidl
+```
 ingress:
   host: www.demo.io
   rules:
@@ -186,8 +191,8 @@ on bootstrapping.
 
 ### Configure single node topology
 It is possible to boot a single node K8S cluster. It may not be best practice, but it can be useful for local testing using 
-the Jetpack playbooks for fast local deployments. In my experience the first cluster 
-formation takes a bit longer though.
+the Jetpack playbooks for fast local deployments. In my experience the first cluster formation 
+takes a bit longer though.
 
 The details of the node should be configured in the Ansible repository located at atomika/inventory/single_node_inventory.yml. 
 
@@ -257,7 +262,9 @@ It is possible to reset each node in the cluster with a single command:
 
 However, this reset is enforced every time the k8s_boot.yml runs.
 
-## Jetpack: Declarative deployments of Spring microservices using Maven JIB
+## Jetpack: Declarative deployment pipelines 
+
+### Declarative deployments of Spring microservices using Maven JIB
 A fuller description on how to declare Continuous Integration and Deployment (CI/CD) for a Spring microservices project 
 is available at [Dzone.com ](https://dzone.com/articles/fast-feature-branch-deployments-of-micro-services).
 
@@ -275,9 +282,18 @@ the pre- and post-commands specified in jetpack/vars.yml
 A sample declaration is available at jetpack/vars.yml. It specifies the deployment of the GitHub project located at 
 https://github.com/jrb-s2c-github/spinnaker_tryout.
 
-### Build server
-A new entry is required in the inventory to designate the server that will build and deploy the container to its ContainerD
-daemon.
+This pipeline should work for all public git repos, but only for GitHub private repos.
+
+### Declarative deployments of containers pulled from container registry
+This pipeline follows the process used for Maven JIB, the only difference being that cloning
+and integration using JIB has been replaced by a single pull from a container registry
+
+It should work for all container registries, but has only been tested against a private
+GitHub container\package registry. 
+
+### Build server required for local integration using JIB
+A new entry is required in the inventory to designate the server that will build and deploy the
+container to its ContainerD daemon. This is only requred for Maven JIB.
 
 ```
 builder:
@@ -368,22 +384,26 @@ supports the Ingress of type ingress-nginx in its endeavours.
 
 #### Declaring Spring Microservice deployments
 
-```
+###### Deploying images prepared by Maven JIB
+
+```yaml
+git_server_fqdn: github.com     # Fully qualified domain name of GIT provider
+
 apps:
 - name: hello1                   # Name of the K8S Service
-  github_account: jrb-s2c-github # GitHub account that contains the repository to clone
-  git_repo: spinnaker_tryout     # GitHub repository to clone
-  jib_dir: hello_svc             # Use "." for a single module or name of directory containing JIB connfiguration for multi-module maven project   
+  git_account: jrb-s2c-github    # Git account that contains the repository to clone
+  git_repo: spinnaker_tryout     # Git repository to clone
+  integration_dir: hello_svc             # Use "." for a single module or name of directory containing JIB connfiguration for multi-module maven project   
   image: s2c/hello_svc           # Name of container image  that JIB will create
   namespace: env1                # K8S namespace that the micro-services should be added to
   git_branch: kustomize          # Git branch to checkout
   replicas: 3                    # Amount of micro-services instances to start
-  application_properties:        # The application.properties of te Spring micro-service
+  application_properties:        # The application.properties of the Spring micro-service
   application.properties: |
   my_name: LocalKubeletEnv1
 - name: hello2                   # Declaration of a second microservice to deploy
   git_repo: spinnaker_tryout
-  jib_dir: hello_svc
+  integration_dir: hello_svc
   image: s2c/hello_svc
   namespace: env2
   config_map_path:
@@ -417,14 +437,36 @@ with the base image. JIB adds the code to this base before publishing the new im
 
 More on the maven JIB plugin can be read at https://github.com/GoogleContainerTools/jib
 
+###### Deploying images pulled from container registry
+```yaml
+registry_server_fqdn: ghcr.io                   # Fully qualified domain name of container registry               
+
+apps:
+  - name: ms-cervice                            # Name of the K8S Service
+    image: ghcr.io/cerverless/mergesort:latest  # Container image
+    registry_account: jrb-s2c-github            # Account/username that will be used for CR authentication
+    namespace: cervices                         # K8S namespace that the micro-services should be added to 
+    replicas: 1                                 # Amount of micro-services instances to start  
+    application_properties:                     # Properties to be provided as a ConfigMap to micro-service
+      application.properties: |
+        cervice: mergesort
+
+MORE MICROSERVICES CAN BE ADDED AS PER EXAMPLE FOR JIB PIPELINE
+```
+
+
+
 ## Execution of deployment
 The command to integrate and deploy is:
 >ansible-playbook jetpack/deploy.yml  -i atomika/inventory/****.yml
 
 As always, take care to specify the correct topology inventory to use after the -i switch.
 
-The play will request a GitHub personal access token. Hit enter to bypass all this for public repos or
-enter a classic access token for private repos.
+The play will request a security token and one of three things should happen:
+* Enter token for Git provider (a classic access token for GitHub as outlined in the dzone article)
+* Enter credential for private container registry (a classic access token with package read for
+GitHub container/package registry)
+* Hit enter to bypass all this for public access
 
 Read this [DZone.com](https://dzone.com/articles/safe-clones-with-ansible) 
 article for the background, but this will initiate a safe GIT clone. This classic access token should be given the following scopes/permissions: 
@@ -517,6 +559,10 @@ this keypair after first use should the security requirements warrant it.
 providing a second user to be given a kubeconfig for kubectl commands is not mandatory anymore.
 8) Jetpack can clone from public repos without requiring security tokens.
 
+### V5_2 Experimental
+1) Added ability to either integrate using maven jib or pull from private container registry: jib_dir and github_account 
+variables were renamed to integration_dir and git_account, respectively.  
+
 ## Outstanding
 1) Is it possible to upgrade the cluster K8s version from Ansible? 
 2) Graphical user interface to configure bootstrapping, Atomika topology and Jetpack CI/CD
@@ -535,6 +581,8 @@ is only a problem when not using Wormhole.
 12) Integration with ansible lint on some level 
 13) Defaulting metallb range to something on the gateway's local subnet 
 14) Checking whether things can be sped up by not gathering facts every time?
+15) Pulling from public container registry might work, but needs to be tested
+
 
 # Common problems
 
@@ -542,7 +590,7 @@ is only a problem when not using Wormhole.
 The Ansible controller uses SSH to connect to the target nodes. Common solutions to fix connection failure are:
 1) Sign on from the Ansible controller to the target node using the user configured in 
 the inventory or perform key scanning to establish trust between the servers. This 
-should have been resolved with version 5.1.
+should have been resolved with version 5_1.
 2) Check that the ansible user set in the inventory is correct. This should not happen when sticking to wormhole images.
 3) Make sure that you created the public/private keys for the user configured for each node in the inventory. Ansible user 
 is used in the sample inventories and is therefore recommended way. This should not happen when sticking to wormhole images.

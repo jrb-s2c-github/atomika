@@ -1,0 +1,36 @@
+
+#- name: Build Docker image
+#  become: true
+#  community.docker.docker_image_build:
+#    dockerfile: "{{ item.docker_file }}"
+#    name: "{{ item.name }}:latest"
+#    path: "~ansible/{{ item.name }}/{{ item.integration_dir }}"
+#  when: item.docker_file is defined
+#  loop:
+#    "{{ apps }}"
+#
+#- name: Export images generated from dockerfile to tar ball
+#  ansible.builtin.command: "sudo docker save -o {{ item.name }}.tar {{ item.name }}:latest"
+#  args:
+#    chdir: /root
+#  register: ctr_out
+#  become: true
+#  when: item.docker_file is defined
+#  #      changed_when: '"BUILD SUCCESS" in mvn_output'
+#  loop:
+#    "{{ apps }}"
+#
+#- name: Load images generated from dockerfile into containerd
+#  ansible.builtin.command: "ctr -n=k8s.io images import /root/{{ item.name }}.tar"
+#  args:
+#    chdir: "/home/ansible/{{ item.name }}/{{ item.integration_dir }}"
+#  register: ctr_out
+#  become: true
+#  when: item.docker_file is defined
+#  #      changed_when: '"BUILD SUCCESS" in mvn_output'
+#  loop:
+#    "{{ apps }}"
+#
+#- name: Print result of CTR Load
+#  ansible.builtin.debug:
+#    var: ctr_out

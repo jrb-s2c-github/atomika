@@ -1,11 +1,13 @@
-- hosts: builder
+# deploy.yml
+
+- hosts: masters
   gather_facts: yes
   connection: ssh
   vars_files:
     - vars.yml
   vars_prompt:
-    - name: github_token
-      prompt: "Enter your github personal access token or hit enter for a public repo"
+    - name: credential_token
+      prompt: "Enter the git/registry access token should it be required. Hit enter should it not be required"
       private: true
   tasks:
     - name: Remove test namespace
@@ -16,86 +18,18 @@
         kind: Namespace
         state: absent
 
-    - name: Install Maven
-      ansible.builtin.apt:
-        name: maven
-        state: present
-      become: true
-
-    # public repo
-    - name: Checking out sources from a public repo
-      ansible.builtin.git:
-        repo: "https://{{ git_server_fqdn }}/{{ item.github_account }}/{{ item.git_repo }}.git"
-        dest: "{{ item.name }}"
-        version: "{{ item.git_branch }}"
-      loop:
-        "{{ apps }}"
-      when: github_token == ""
-
-    # private repo
-    - name: Checking out sources from a private repo
-      ansible.builtin.include_role:
-        name: github-add-deploy-key
-      vars:
-        key_path: ~/gh_deploy_key
-        known_hosts_path: ~/.ssh/known_hosts
-        key_title: ansible_key
-        github_access_token: "{{ github_token }}"
-        clone_dest: "~/{{ item.name }}"
-        github_account_id: "{{ item.github_account }}"
-        repo: "{{ item.git_repo }}"
-        branch: "{{ item.git_branch }}"
-      loop:
-        "{{ apps }}"
-      when: github_token != ""
-
-    - name: Maven install
-      ansible.builtin.command: "mvn install"
-      args:
-        chdir: "~/{{ item.name }}"
-      register: mvn_out
-      #      become: true
-      changed_when: mvn_out.rc == 0
-      loop:
-        "{{ mvn_parents }}"
-
-    - name: Run JIB builds
-      ansible.builtin.command: "mvn clean compile jib:buildTar -Dimage={{ item.name }}:{{ item.namespace }}"
-      args:
-        chdir: "~/{{ item.name }}/{{ item.jib_dir }}"
-      register: mvn_out
-      changed_when: mvn_out.rc == 0
-#      become: true
-#      changed_when: '"BUILD SUCCESS" in mvn_output'
-      loop:
-        "{{ apps }}"
-#
-#    - name: Print result of JIB build
-#      ansible.builtin.debug:
-#        var: mvn_out
-
-# https://blog.scottlowe.org/2020/01/25/manually-loading-container-images-with-containerd/
-    - name: Load images into containerd
-      ansible.builtin.command: ctr -n=k8s.io images import jib-image.tar
-      args:
-        chdir: "/home/ansible/{{ item.name }}/{{ item.jib_dir }}/target"
-      register: ctr_out
-      become: true
-      #      changed_when: '"BUILD SUCCESS" in mvn_output'
-      loop:
-        "{{ apps }}"
-
-    - name: Print result of CTR Load
-      ansible.builtin.debug:
-        var: ctr_out
+- name: Integrate using maven
+  ansible.builtin.import_playbook: maven_jib.yml
+  when: mvn_parents is defined
 
 - hosts: masters
-  gather_facts: yes
+  gather_facts: no
   connection: ssh
   vars_files:
     - vars.yml
 
   tasks:
+
     - name: Install PIP
       ansible.builtin.apt:
         name: pip
@@ -119,6 +53,8 @@
         state: absent
       loop:
         "{{ namespaces }}"
+
+    - pause: seconds=10
 
     - name: Wait till jetpack namespaces have been deleted
       kubernetes.core.k8s_info:
@@ -163,6 +99,12 @@
       loop:
         "{{ apps }}"
 
+    # create dummy secret for jib so deployment creation does not fail when secret is pulled lower down. It seems to be possible to do this via ServiceAccount and then that can be removed from deployment
+    - name: Create K8s repository secret
+      ansible.builtin.shell: "kubectl -n {{ item.namespace }} create secret docker-registry {{ item.name }}-secret --docker-server={{ registry_server_fqdn | default(git_server_fqdn) }} --docker-username={{ item.registry_account | default('dummy')}} --docker-password={{ credential_token | default ('dummy') }}"
+      loop:
+        "{{ apps }}"
+
     - name: Create deployments
       kubernetes.core.k8s:
         kubeconfig: /home/ansible/.kube/config
@@ -188,13 +130,15 @@
                   app: "{{ item.name }}"
               spec:
                 containers:
-                  - image: "{{ item.name }}:{{ item.namespace }}"
+                  - image: "{{ item.image | default(item.name+':'+item.namespace) }}"
                     name: "{{ item.name }}"
                     resources: { }
                     imagePullPolicy: IfNotPresent
                     volumeMounts:
                       - mountPath: /config
                         name: config
+                imagePullSecrets:
+                  - name: "{{ item.name }}-secret"
                 volumes:
                   - configMap:
                       items:
@@ -290,12 +234,5 @@
                           name: "{{ item.service }}"
                           port:
                             number: 80
-      #                    - path: /bar
-      #                      pathType: Prefix
-      #                      backend:
-      #                        service:
-      #                          name: service2
-      #                          port:
-      #                            number: 8080
       loop:
         "{{ ingress.rules }}"
