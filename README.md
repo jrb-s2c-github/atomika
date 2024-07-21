@@ -542,7 +542,8 @@ is only a problem when not using Wormhole.
 
 ## Playbook refuse to start due to connection issues
 The Ansible controller uses SSH to connect to the target nodes. Common solutions to fix connection failure are:
-1) Sign on from the Ansible controller to the target node using the user configured in 
+1) **Always register the private key with ssh agent before running plays.**
+2) Sign on from the Ansible controller to the target node using the user configured in 
 the inventory or perform key scanning to establish trust between the servers. This should 
 have been resolved with version 5.1, but sometimes /tmp/scan_keys.sh remains hanging around 
 and block creation next time around.
