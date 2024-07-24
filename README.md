@@ -1,6 +1,9 @@
 >>> V5_1 has been released. Cluster formation is now much faster and easier to execute. Only five steps
 are required to have it up and running. 
 
+>>> Work has started on V5_2. First change caters for sourcing images from container registries 
+over and above preparing its own using Maven JIB.
+
 # Atomika
 ```
  ATOMIKA: Local deployments to Kubernetes (on Windows)
