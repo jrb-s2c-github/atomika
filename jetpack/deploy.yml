@@ -18,6 +18,23 @@
         kind: Namespace
         state: absent
 
+    - name: Load and distributed Jetpack input
+      block:
+        - name: Load the CI/CD vars file from custom directory
+          become: true
+          ansible.builtin.include_vars:
+            ignore_unknown_extensions: true
+            dir: "{{ k8s_input_dir }}"
+
+        - name: Copy K8s manifests, patches etc
+          ansible.builtin.copy:
+            src: "{{ k8s_input_dir }}/files"
+            dest: /home/ansible
+            owner: ansible
+            group: ansible
+            mode: '0644'
+      when: k8s_input_dir is defined
+
 - name: Integrate using maven
   ansible.builtin.import_playbook: maven_jib.yml
   when: mvn_parents is defined

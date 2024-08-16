@@ -454,8 +454,6 @@ apps:
 MORE MICROSERVICES CAN BE ADDED AS PER EXAMPLE FOR JIB PIPELINE
 ```
 
-
-
 ## Execution of deployment
 The command to integrate and deploy is:
 >ansible-playbook jetpack/deploy.yml  -i atomika/inventory/****.yml
@@ -467,6 +465,21 @@ The play will request a security token and one of three things should happen:
 * Enter credential for private container registry (a classic access token with package read for
 GitHub container/package registry)
 * Hit enter to bypass all this for public access
+
+Two samples are provided that can be renamed/copied to the input vars.yml: 
+* maven_jib.yml is a sample of using maven JIB to integrate as explained elsewhere
+* container_pull.yml is a sample of how to pull from a Docker registry
+
+It is also possible to specify directory where vars.yml is located:
+>ansible-playbook jetpack/deploy.yml -i atomika/inventory/****.yml -e k8s_input_dir=../../jetpack_cartridges/mergasort
+
+This directory has the following structure
+```python
+    vars.yml  # yam file that contains the pipeline
+    files     # All files in this directory are copied into /home/ansible on the container for use as manifests, patch files, etc for use by post_k8s_cmds commands 
+```
+
+**Remember** to remove the jetpack/vars.yml file should a custom location be provided.
 
 Read this [DZone.com](https://dzone.com/articles/safe-clones-with-ansible) 
 article for the background, but this will initiate a safe GIT clone. This classic access token should be given the following scopes/permissions: 
@@ -561,7 +574,9 @@ providing a second user to be given a kubeconfig for kubectl commands is not man
 
 ### V5_2 Experimental
 1) Added ability to either integrate using maven jib or pull from private container registry: jib_dir and github_account 
-variables were renamed to integration_dir and git_account, respectively.  
+variables were renamed to integration_dir and git_account, respectively.
+2) Location where to pull input vars for Jetpack proper and manifests, patches, etc for Jetpack post/pre kubectl commands 
+can be specified.
 
 ## Outstanding
 1) Is it possible to upgrade the cluster K8s version from Ansible? 
