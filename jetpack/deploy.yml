@@ -150,7 +150,7 @@
                   - image: "{{ item.image | default(item.name+':'+item.namespace) }}"
                     name: "{{ item.name }}"
                     resources: { }
-                    imagePullPolicy: IfNotPresent
+                    imagePullPolicy: Always
                     volumeMounts:
                       - mountPath: /config
                         name: config

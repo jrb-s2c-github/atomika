@@ -236,7 +236,7 @@ default switch, this gateway is located on the subnet with the lowest numeric va
 use by the vm's. More can be read [here](https://learn.microsoft.com/en-us/windows-server/networking/sdn/technologies/hyper-v-network-virtualization/hyperv-network-virtualization-technical-details-windows-server),
 but Windows routes traffic between its vm's internally using a star network. The 
 gateway can be determined by running and seeing that the gateway is 172.26.64.1:
-```aidl
+```
 janrb@dquick:~/atomika$ ip route
 default via 172.26.64.1 dev eth0
 172.18.0.0/16 dev docker0 proto kernel scope link src 172.18.0.1 linkdown
@@ -293,7 +293,7 @@ GitHub container\package registry.
 
 ### Build server required for local integration using JIB
 A new entry is required in the inventory to designate the server that will build and deploy the
-container to its ContainerD daemon. This is only requred for Maven JIB.
+container to its ContainerD daemon. This is only required for Maven JIB.
 
 ```
 builder:
