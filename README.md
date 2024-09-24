@@ -478,11 +478,12 @@ This directory has the following structure
     vars.yml  # yam file that contains the pipeline
     files     # All files in this directory are copied into /home/ansible on the container for use as manifests, patch files, etc for use by post_k8s_cmds commands 
 ```
+Samples of such Jetpack CI/CD cartridges can be found at https://github.com/Cerverless/jetpack_cartridges.
 
-**Remember** to remove the jetpack/vars.yml file should a custom location be provided.
+**Remember** to empty the jetpack/vars.yml file should a custom location be provided.
 
-Read this [DZone.com](https://dzone.com/articles/safe-clones-with-ansible) 
-article for the background, but this will initiate a safe GIT clone. This classic access token should be given the following scopes/permissions: 
+***Hint:*** Read this [DZone.com](https://dzone.com/articles/safe-clones-with-ansible) 
+article for the background on short jib deployment and safe GIT clones using classic access token with the following scopes/permissions: 
 *repo, admin:public_key, user, and admin:gpg_key*. 
 
 ## Testing Ingress and MetalLB LoadBalancer 
@@ -576,7 +577,8 @@ providing a second user to be given a kubeconfig for kubectl commands is not man
 1) Added ability to either integrate using maven jib or pull from private container registry: jib_dir and github_account 
 variables were renamed to integration_dir and git_account, respectively.
 2) Location where to pull input vars for Jetpack proper and manifests, patches, etc for Jetpack post/pre kubectl commands 
-can be specified.
+can be specified using "-e k8s_input_dir" variable. See https://github.com/Cerverless/jetpack_cartridges/ for samples of
+java-jib and container registry CI/CD Jetpack cartridges.
 
 ## Outstanding
 1) Is it possible to upgrade the cluster K8s version from Ansible? 
