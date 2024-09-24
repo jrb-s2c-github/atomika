@@ -35,17 +35,38 @@
             mode: '0644'
       when: k8s_input_dir is defined
 
-- name: Integrate using maven
-  ansible.builtin.import_playbook: maven_jib.yml
-  when: mvn_parents is defined
+
+- hosts: builder
+  gather_facts: no
+  connection: ssh
+  vars_files:
+    - vars.yml
+  tasks:
+    - name: Load the CI/CD vars file from custom directory
+      become: true
+      ansible.builtin.include_vars:
+        ignore_unknown_extensions: true
+        dir: "{{ k8s_input_dir }}"
+
+    - name: Integrate using maven JIB
+      ansible.builtin.import_tasks: 
+        file: maven_jib.yml
+      when: mvn_parents is defined
 
 - hosts: masters
   gather_facts: no
   connection: ssh
   vars_files:
     - vars.yml
+  vars:
+    img_pull_policy: Always
 
   tasks:
+
+    - name: Ensure ImagePullPolicy is correct
+      ansible.builtin.set_fact:
+        img_pull_policy: IfNotPresent
+      when: mvn_parents is defined
 
     - name: Install PIP
       ansible.builtin.apt:
@@ -150,7 +171,7 @@
                   - image: "{{ item.image | default(item.name+':'+item.namespace) }}"
                     name: "{{ item.name }}"
                     resources: { }
-                    imagePullPolicy: Always
+                    imagePullPolicy: "{{ img_pull_policy }}"
                     volumeMounts:
                       - mountPath: /config
                         name: config

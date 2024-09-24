@@ -1,11 +1,11 @@
 # maven_jib.yml
 
-- hosts: builder
-  gather_facts: no
-  connection: ssh
-  vars_files:
-    - vars.yml
-  tasks:
+#- hosts: builder
+#  gather_facts: no
+#  connection: ssh
+#  vars_files:
+#    - vars.yml
+#  tasks:
     - name: Install Maven
       ansible.builtin.apt:
         name: maven
