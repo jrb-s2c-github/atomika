@@ -1,2 +1,2 @@
-k8s_version:  1.30.2-1.1
-containerd_version: 1.6.33-1
+k8s_version:  1.36
+#containerd_version: 2.3.3

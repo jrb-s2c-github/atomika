@@ -5,6 +5,11 @@
   vars_prompt:
 
   tasks:
+   - name: Install packages
+     ansible.builtin.package:
+       name: python3-kubernetes
+       state: present
+
    - name: Initializing Kubernetes Cluster
      become: yes
      command: kubeadm init --pod-network-cidr=10.244.0.0/16 --control-plane-endpoint=k8scp:6443 --upload-certs

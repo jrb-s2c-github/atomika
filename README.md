@@ -1,8 +1,10 @@
 >>> V5_1 has been released. Cluster formation is now much faster and easier to execute. Only five steps
 are required to have it up and running. 
 
->>> Work has started on V5_2. First change caters for sourcing images from container registries 
-over and above preparing its own using Maven JIB.
+>>> Work has started on V6. Planned changes, amongst others, are 
+1) sourcing images from container registries over and above preparing its own using Maven JIB
+2) Upgrade to higher version of Kubernetes
+3) Support for higher versions of Ubuntu
 
 # Atomika
 ```
@@ -69,10 +71,18 @@ root of atomika_wormhole with sudo password of 'atmin'.
 > It only takes five steps to start the Atomika Kubernetes cluster!
 
 #### Step 1
+Required for only for Windows:
 *Download* the matching version of an Atomika Wormhole image from [here](https://drive.google.com/drive/folders/1OY1rDy6MwYi0iXD159igjnJ7IOrBbJ1U).
 
 #### Step 2
-*Create two nodes*. On Windows this can be done by running the liftoff Powershell script from the [jrb-s2c-github/atomika_wormhole](https://github.com/jrb-s2c-github/atomika_wormhole) 
+*Prepare two nodes*. 
+On linux follow the steps lower down to 
+  bootstrap assess for the Ansible user via 'ansible-playbook --ask-pass bootstrap/bootstrap.yml -i atomika/inventory/*.yml -K'
+  and 
+  install Kubernetes via 'ansible-playbook -i atomika/k8s_init.yml atomika/inventory/*.yml -K'
+
+
+On Windows this can be done by running the liftoff Powershell script from the [jrb-s2c-github/atomika_wormhole](https://github.com/jrb-s2c-github/atomika_wormhole) 
 project in a PowerShell admin console. This script can be found at startup_scripts/liftoff.ps1. 
 
 This will require 8GB of ram. Should ram be limited boot the control-plane/master with 2GB

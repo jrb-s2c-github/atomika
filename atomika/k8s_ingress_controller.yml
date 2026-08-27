@@ -4,7 +4,7 @@
   connection: ssh
   vars_prompt:
     - name: "metal_lb_range"
-      prompt: "Enter the IP range from which the load balancer IP can be assigned?"
+      prompt: "Enter the IP range from which the load balancer IP can be assigned or press enter when there will be HAProxy in front?"
       private: no
       default: 192.168.68.200-192.168.68.210
   tasks:
