@@ -21,6 +21,7 @@
 
 - name: Install & configure IngressController and LoadBalancers.
   ansible.builtin.import_playbook: k8s_ingress_controller.yml
+  when: groups['comasters'] is defined
 
 - name: Test the cluster
   ansible.builtin.import_playbook: k8s_test_cluster.yml

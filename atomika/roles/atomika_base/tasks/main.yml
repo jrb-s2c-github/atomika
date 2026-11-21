@@ -17,12 +17,13 @@
  - name: Create an empty file for containerd module.
    copy:
      content: ""
-     dest: /etc/modules-load.d/containerd.conf
+     dest: /etc/modules-load.d/k8s.conf
      force: no
 
+       # dest: /etc/modules-load.d/containerd.conf
  - name: Configure module for containerd.
    blockinfile:
-     path: /etc/modules-load.d/containerd.conf
+     path: /etc/modules-load.d/k8s.conf
      block: |
           overlay
           br_netfilter
@@ -45,6 +46,16 @@
  - name: Apply sysctl params without reboot.
    command: sysctl --system
 
+ - name: Stop systemd modules
+   ansible.builtin.systemd_service:
+    name: systemd-modules-load.service
+    state: stopped
+
+ - name: Start systemd modules
+   ansible.builtin.systemd_service:
+    name: systemd-modules-load.service
+    state: started
+
  - name: Installing Prerequisites for Kubernetes
    apt:
      name:
@@ -57,36 +68,40 @@
      state: present
 
  - name: Add Docker’s official GPG key
-   apt_key:
+   ansible.builtin.get_url:
      url: https://download.docker.com/linux/ubuntu/gpg
-     state: present
-#
-#   curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key --keyring /etc/apt/trusted.gpg.d/docker.gpg add -
-#   sudo add-apt-repository "deb [arch=arm64] https://download.docker.com/linux/ubuntu focal stable"
-#   sudo apt-get update && sudo apt-get install -y containerd.io
+     dest: /etc/apt/keyrings/docker.asc
+     mode: "0644"
 
  - name: Add Docker Repository
+   become: true
    apt_repository:
-     repo: deb [arch=amd64] https://download.docker.com/linux/ubuntu jammy stable
+     repo: >-
+          deb [arch=amd64
+          signed-by=/etc/apt/keyrings/docker.asc]
+          https://download.docker.com/linux/ubuntu
+          {{ ansible_distribution_release }} stable
+     #repo: deb [arch=amd64  signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu jammy stable
      #repo: deb [arch=armhf] https://download.docker.com/linux/ubuntu xenial stable
      state: present
      filename: docker
      update_cache: yes
 
  - name: Install containerd
-   block:
-     - name: Install containerd not allowing downgrade
-       apt:
-         name:
-           - containerd.io={{ containerd_version }}
-         state: present
-   rescue:
-     - name: Retry to install containerd allowing downgrade
-       apt:
-         allow_downgrade: true
-         name:
-           - containerd.io={{ containerd_version }}
-         state: present
+   #block:
+   #- name: Install containerd not allowing downgrade
+   apt:
+     name:
+           #- containerd.io={{ containerd_version }}
+       - containerd.io
+     state: present
+           #rescue:
+           #- name: Retry to install containerd allowing downgrade
+           #apt:
+           #allow_downgrade: true
+           #name:
+           #- containerd.io={{ containerd_version }}
+           #state: present
   #
 # - name: Install containerd.
 #   apt:
@@ -102,11 +117,11 @@
  - name: Configure containerd - create toml.
    shell: /usr/bin/containerd config default > /etc/containerd/config.toml
 
- - name: Configuring containerd to use version 3.9 of pause container
-   ansible.builtin.replace:
-     path: /etc/containerd/config.toml
-     regexp: pause:3.6
-     replace: pause:3.9     
+     #- name: Configuring containerd to use version 3.9 of pause container
+     #ansible.builtin.replace:
+     #path: /etc/containerd/config.toml
+     #regexp: pause:3.6
+     #replace: pause:3.9     
   
  - name: Configuring containerd to enable SystemdCgroup
    ansible.builtin.replace:
@@ -121,17 +136,24 @@
      enabled: yes
      daemon-reload: yes
 
- - name: Add Google official GPG key
+ - name: Create apt keyring directory
+   ansible.builtin.file:
+     path: /etc/apt/keyrings
+     state: directory
+     mode: '0755'
+
+ - name: Add kubernetes GPG key
    apt_key:
-#     url: https://packages.cloud.google.com/apt/doc/apt-key.gpg
-     url: https://pkgs.k8s.io/core:/stable:/v1.30/deb/Release.key
-     keyring: /etc/apt/kubernetes-apt-keyring.gpg
+     #url: https://packages.cloud.google.com/apt/doc/apt-key.gpg
+     url: https://pkgs.k8s.io/core:/stable:/v{{ k8s_version }}/deb/Release.key
+     keyring: /etc/apt/keyrings/kubernetes-apt-keyring.gpg
      state: present
 
  - name: Add Kubernetes Repository
+   become: true
    apt_repository:
-     repo: deb [signed-by=/etc/apt/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v1.30/deb/ /
-           #repo: deb http://apt.kubernetes.io/ kubernetes-xenial main
+     repo: deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v{{ k8s_version }}/deb/ /
+    #repo: deb http://apt.kubernetes.io/ kubernetes-xenial main
      state: present
      filename: kubernetes
      mode: 0600
@@ -140,10 +162,11 @@
    become: true
    apt:
      name:
-       - kubeadm={{ k8s_version }}
-       - kubectl={{ k8s_version }}
-       - kubelet={{ k8s_version }}
+       - kubeadm
+       - kubectl
+       - kubelet
      state: present
+     update_cache: true
 
  - name: Enable service kubelet, and enable persistently
    service:

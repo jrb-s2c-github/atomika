@@ -1,6 +1,11 @@
 >>> V5_2 is in progress. It caters for sourcing images from container registries over and above
 preparing its own using Maven JIB.
 
+>>> Work has started on V6. Planned changes, amongst others, are 
+1) sourcing images from container registries over and above preparing its own using Maven JIB
+2) Upgrade to higher version of Kubernetes
+3) Support for higher versions of Ubuntu
+
 # Atomika
 ```
  ATOMIKA: Local deployments to Kubernetes (on Windows)
@@ -69,10 +74,18 @@ root of atomika_wormhole with sudo password of 'atmin'.
 > It only takes five steps to start the Atomika Kubernetes cluster!
 
 #### Step 1
+Required for only for Windows:
 *Download* the matching version of an Atomika Wormhole image from [here](https://drive.google.com/drive/folders/1OY1rDy6MwYi0iXD159igjnJ7IOrBbJ1U).
 
 #### Step 2
-*Create two nodes*. On Windows this can be done by running the liftoff Powershell script from the [jrb-s2c-github/atomika_wormhole](https://github.com/jrb-s2c-github/atomika_wormhole) 
+*Prepare two nodes*. 
+On linux follow the steps lower down to 
+  bootstrap assess for the Ansible user via 'ansible-playbook --ask-pass bootstrap/bootstrap.yml -i atomika/inventory/*.yml -K'
+  and 
+  install Kubernetes via 'ansible-playbook -i atomika/k8s_init.yml atomika/inventory/*.yml -K'
+
+
+On Windows this can be done by running the liftoff Powershell script from the [jrb-s2c-github/atomika_wormhole](https://github.com/jrb-s2c-github/atomika_wormhole) 
 project in a PowerShell admin console. This script can be found at startup_scripts/liftoff.ps1. 
 
 This will require 8GB of ram. Should ram be limited boot the control-plane/master with 2GB
@@ -605,13 +618,15 @@ is only a problem when not using Wormhole.
 
 ## Playbook refuse to start due to connection issues
 The Ansible controller uses SSH to connect to the target nodes. Common solutions to fix connection failure are:
-1) Sign on from the Ansible controller to the target node using the user configured in 
-the inventory or perform key scanning to establish trust between the servers. This 
-should have been resolved with version 5_1.
-2) Check that the ansible user set in the inventory is correct. This should not happen when sticking to wormhole images.
-3) Make sure that you created the public/private keys for the user configured for each node in the inventory. Ansible user 
+1) **Always register the private key with ssh agent before running plays.**
+2) Sign on from the Ansible controller to the target node using the user configured in 
+the inventory or perform key scanning to establish trust between the servers. This should 
+have been resolved with version 5.1, but sometimes /tmp/scan_keys.sh remains hanging around 
+and block creation next time around.
+3) Check that the ansible user set in the inventory is correct. This should not happen when sticking to wormhole images.
+4) Make sure that you created the public/private keys for the user configured for each node in the inventory. Ansible user 
 is used in the sample inventories and is therefore recommended way. This should not happen when sticking to wormhole images.
-4) Should there be an empty workers group the taints/labels preventing scheduling on masters and MetalLB speakers to announce
+5) Should there be an empty workers group the taints/labels preventing scheduling on masters and MetalLB speakers to announce
 will not be removed from masters and the cluster will never stabilize.
 
 ## Tips and tricks
