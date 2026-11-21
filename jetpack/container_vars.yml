@@ -1,0 +1,29 @@
+# Example of how to configure Jetpack to deploy images from private registry. See README.MD in root for explanation
+registry_server_fqdn: ghcr.io
+
+apps:
+  - name: ms-cervice
+    image: ghcr.io/cerverless/mergesort:latest
+    registry_account: jrb-s2c-github
+    namespace: cervices
+    replicas: 1
+    application_properties:
+      application.properties: |
+        cervice: mergesort
+ingress:
+  host: www.demo.io
+  rules:
+    - service: hello1
+      namespace: cervices
+      ingress_path: /env1/hello
+      service_path: /
+
+namespaces:
+  - name: cervices    
+
+pre_k8s_cmds:
+  - kubectl get nodes
+
+post_k8s_cmds:
+  - kubectl get pods -A
+

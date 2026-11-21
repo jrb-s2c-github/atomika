@@ -13,3 +13,4 @@
 Jetpack
 * integrate and deploy public repo
 * integrate and deploy private repo
+* pull from private container registry
