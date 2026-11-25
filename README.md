@@ -2,8 +2,8 @@
 are required to have it up and running. 
 
 >>> Work has started on V6. Planned changes, amongst others, are
-    sourcing images from container registries over and above preparing its own using Maven JIB and being able to preload images into the cluster
-    Upgrade to higher version of Kubernetes
+    sourcing images from container registries over and above preparing its own using Maven JIB and being able to preload images into the cluster;
+    Upgrade to higher version of Kubernetes and
     Support for higher versions of Ubuntu
 
 
